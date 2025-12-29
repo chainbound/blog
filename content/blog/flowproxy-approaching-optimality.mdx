@@ -1,0 +1,354 @@
+---
+title: "FlowProxy: Approaching Optimality"
+authors: [mempirate, lorenzo]
+date: 2024-12-15
+tags: [rust, networking, performance]
+---
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+<img src="/flowproxy-approaching-optimality/logo.png" alt="FlowProxy V2" style={{ maxWidth: '600px', margin: '0 auto', display: 'block' }} />
+
+## Background
+
+In [**Introducing FlowProxy**](https://collective.flashbots.net/t/introducing-flowproxy/5341), [Chainbound](https://chainbound.io/) collaborated with Flashbots to deprecate its [original orderflow proxy](https://github.com/flashbots/buildernet-orderflow-proxy) implementation in Go in favor of a new one built in Rust, created with the goal of reducing end-to-end latency, efficiency and increasing observability in BuilderNet’s networking layer. This first collaboration aimed at bringing it to production-ready quality and ready for deployment, already observing good improvements in networking and processing latency.
+
+This second collaboration expanded on the *Next Steps* section outlined in the previous report, with success. It includes a quantitative analysis of order losses and latencies across BuilderNet and extensive work to improve the transport used for communicating and reduce both CPU and memory usage. We encountered a couple of non-obvious learnings that we outline below, and we hope this will be useful to the community.
+
+## Network Analysis
+
+FlowProxy features a Clickhouse integration which makes possible to record *bundle receipts.* A bundle receipt consists of a short summary that includes the timestamp of when the bundle was sent and received by instances, along with its raw size in bytes (useful for tracking size → latency correlation). We used this data to better understand FlowProxy’s network performance in its entirety, and to discover what improvements to focus on.
+
+### Bundle Loss
+
+We started with analyzing bundle loss between instances. The table below reports the percentage of bundle loss on individual links, during a small time range of congestion:
+
+| src | dst | lost | total | loss_rate_pct |
+| --- | --- | --- | --- | --- |
+| beaver_eastus_07 | nethermind_we_08 | 7857 | 35848 | 21.92% |
+| beaver_eastus_07 | flashbots_we_09 | 1969 | 96597 | 2.04% |
+| beaver_eastus_07 | beaver_we_08 | 1354 | 94000 | 1.44% |
+| beaver_eastus_07 | flashbots_eastus_10 | 2 | 140801 | 0.00% |
+| beaver_eastus_07 | nethermind_eastus_07 | 1 | 141534 | 0.00% |
+| nethermind_eastus_07 | flashbots_eastus_10 | 10 | 35315 | 0.03% |
+| nethermind_eastus_07 | beaver_eastus_07 | 10 | 35377 | 0.03% |
+| nethermind_eastus_07 | flashbots_we_09 | 6 | 34560 | 0.02% |
+| nethermind_eastus_07 | beaver_we_08 | 6 | 35216 | 0.02% |
+| nethermind_eastus_07 | nethermind_we_08 | 4 | 34490 | 0.01% |
+| flashbots_eastus_10 | beaver_we_08 | 4 | 34877 | 0.01% |
+| flashbots_eastus_10 | flashbots_we_09 | 4 | 34266 | 0.01% |
+| flashbots_eastus_10 | nethermind_we_08 | 3 | 34156 | 0.01% |
+| flashbots_eastus_10 | beaver_eastus_07 | 1 | 35054 | 0.00% |
+
+<Accordions type="single">
+    <Accordion title="Full Table">
+    | src | dst | lost | total | loss rate |
+    | --- | --- | --- | --- | --- |
+    | beaver_eastus_07 | nethermind_we_08 | 7857 | 35848 | 21.92% |
+    | beaver_eastus_07 | flashbots_we_09 | 1969 | 96597 | 2.04% |
+    | beaver_eastus_07 | beaver_we_08 | 1354 | 94000 | 1.44% |
+    | nethermind_eastus_07 | flashbots_mkosi_1 | 58 | 31205 | 0.19% |
+    | beaver_eastus_07 | flashbots_mkosi_1 | 13 | 125199 | 0.01% |
+    | flashbots_eastus_10 | flashbots_mkosi_1 | 11 | 31415 | 0.04% |
+    | nethermind_eastus_07 | flashbots_eastus_10 | 10 | 35315 | 0.03% |
+    | nethermind_eastus_07 | beaver_eastus_07 | 10 | 35377 | 0.03% |
+    | nethermind_eastus_07 | flashbots_we_09 | 6 | 34560 | 0.02% |
+    | nethermind_eastus_07 | beaver_we_08 | 6 | 35216 | 0.02% |
+    | flashbots_eastus_10 | beaver_we_08 | 4 | 34877 | 0.01% |
+    | nethermind_eastus_07 | nethermind_we_08 | 4 | 34490 | 0.01% |
+    | flashbots_eastus_10 | flashbots_we_09 | 4 | 34266 | 0.01% |
+    | nethermind_we_08 | flashbots_eastus_10 | 3 | 113560 | 0.00% |
+    | nethermind_we_08 | beaver_eastus_07 | 3 | 116296 | 0.00% |
+    | nethermind_we_08 | nethermind_eastus_07 | 3 | 113862 | 0.00% |
+    | flashbots_eastus_10 | nethermind_we_08 | 3 | 34156 | 0.01% |
+    | beaver_eastus_07 | flashbots_eastus_10 | 2 | 140801 | 0.00% |
+    | flashbots_mkosi_1 | beaver_we_08 | 1 | 95552 | 0.00% |
+    | flashbots_mkosi_1 | nethermind_eastus_07 | 1 | 95172 | 0.00% |
+    | nethermind_we_08 | beaver_we_08 | 1 | 104890 | 0.00% |
+    | flashbots_mkosi_1 | beaver_eastus_07 | 1 | 96537 | 0.00% |
+    | flashbots_mkosi_1 | flashbots_we_09 | 1 | 95015 | 0.00% |
+    | flashbots_eastus_10 | beaver_eastus_07 | 1 | 35054 | 0.00% |
+    | beaver_eastus_07 | nethermind_eastus_07 | 1 | 141534 | 0.00% |
+    | flashbots_mkosi_1 | flashbots_eastus_10 | 1 | 93635 | 0.00% |
+    | nethermind_we_08 | flashbots_we_09 | 1 | 103316 | 0.00% |
+    </Accordion>
+</Accordions>
+
+We can see in particular that inter-continental links are mostly affected by bundle loss, especially the instance `beaver_eastus_07` which receives the most flow in that region.
+
+The main reason bundles are marked as “lost” is when they time out, or when buffers overflow and backpressure is applied. This confirms what we [explored](https://collective.flashbots.net/t/introducing-flowproxy/5341#p-10727-http-connection-pools-11) in the last post: that HTTP/1.1 and its incapacity to multiplex requests makes it highly inadequate to deal with BuilderNet’s workload. 
+
+### Latency
+
+From the table below we can see latency between individual BuilderNet links during high congestion.
+
+| src | dst | p50_ms | p99_ms | corr_payload_size | observations |
+| --- | --- | --- | --- | --- | --- |
+| beaver_eastus_07 | nethermind_we_08 | 39.619 | 1947.045 | -0.06 | 27991 |
+| beaver_eastus_07 | flashbots_we_09 | 38.022 | 1789.051 | -0.06 | 94628 |
+| beaver_eastus_07 | beaver_we_08 | 39.440 | 1521.599 | -0.04 | 92646 |
+| beaver_eastus_07 | nethermind_eastus_07 | 62.639 | 292.451 | -0.02 | 141533 |
+| nethermind_eastus_07 | beaver_we_08 | 33.381 | 194.660 | 0.59 | 35210 |
+| nethermind_eastus_07 | nethermind_we_08 | 31.541 | 193.107 | 0.58 | 34486 |
+| nethermind_eastus_07 | flashbots_we_09 | 30.992 | 192.134 | 0.60 | 34554 |
+| nethermind_eastus_07 | flashbots_eastus_10 | -0.662 | 58.648 | 0.06 | 35305 |
+| nethermind_eastus_07 | beaver_eastus_07 | -4.514 | 49.629 | 0.02 | 35367 |
+| flashbots_eastus_10 | beaver_we_08 | 40.197 | 201.535 | 0.60 | 34873 |
+| flashbots_eastus_10 | nethermind_we_08 | 38.467 | 200.267 | 0.59 | 34153 |
+| flashbots_eastus_10 | flashbots_we_09 | 37.945 | 199.814 | 0.61 | 34262 |
+| flashbots_eastus_10 | beaver_eastus_07 | 2.506 | 56.186 | 0.02 | 35053 |
+| flashbots_eastus_10 | nethermind_eastus_07 | -7.746 | 26.184 | 0.04 | 35048 |
+
+<Accordions type="single">
+    <Accordion title="Full Table">
+    
+    
+    | src | dst | p50_ms | p90_ms | p99_ms | p999_ms | corr_payload_size | observations |
+    | --- | --- | --- | --- | --- | --- | --- | --- |
+    | beaver_eastus_07 | nethermind_we_08 | 39.619 | 1668.253 | 1947.045 | 2005.370 | -0.06 | 27991 |
+    | beaver_eastus_07 | flashbots_we_09 | 38.022 | 1414.608 | 1789.051 | 1978.707 | -0.06 | 94628 |
+    | beaver_eastus_07 | beaver_we_08 | 39.440 | 852.713 | 1521.599 | 1970.474 | -0.04 | 92646 |
+    | beaver_eastus_07 | flashbots_mkosi_1 | 39.591 | 419.213 | 1099.179 | 1221.009 | -0.03 | 125186 |
+    | nethermind_we_08 | flashbots_eastus_10 | 44.564 | 126.509 | 294.049 | 502.033 | -0.21 | 113557 |
+    | beaver_eastus_07 | nethermind_eastus_07 | 62.639 | 61.099 | 292.451 | 476.941 | -0.02 | 141533 |
+    | flashbots_mkosi_1 | flashbots_eastus_10 | 43.261 | 84.517 | 281.969 | 560.069 | 0.16 | 93634 |
+    | flashbots_mkosi_1 | beaver_eastus_07 | 44.489 | 66.412 | 257.931 | 519.216 | 0.24 | 96536 |
+    | nethermind_we_08 | beaver_eastus_07 | 46.272 | 97.637 | 227.358 | 323.382 | 0.32 | 116293 |
+    | nethermind_we_08 | nethermind_eastus_07 | 51.281 | 101.732 | 224.596 | 324.134 | 0.32 | 113859 |
+    | nethermind_we_08 | beaver_we_08 | 25.860 | 5.459 | 216.067 | 324.788 | -0.02 | 104889 |
+    | flashbots_eastus_10 | flashbots_mkosi_1 | 40.740 | 45.731 | 202.758 | 286.997 | 0.59 | 31404 |
+    | flashbots_mkosi_1 | nethermind_eastus_07 | 49.122 | 61.092 | 202.012 | 273.676 | 0.37 | 95171 |
+    | flashbots_eastus_10 | beaver_we_08 | 40.197 | 46.283 | 201.535 | 284.387 | 0.60 | 34873 |
+    | flashbots_eastus_10 | nethermind_we_08 | 38.467 | 46.728 | 200.267 | 283.487 | 0.59 | 34153 |
+    | flashbots_eastus_10 | flashbots_we_09 | 37.945 | 44.632 | 199.814 | 281.712 | 0.61 | 34262 |
+    | nethermind_eastus_07 | flashbots_mkosi_1 | 33.733 | 37.802 | 195.461 | 204.237 | 0.59 | 31147 |
+    | nethermind_eastus_07 | beaver_we_08 | 33.381 | 38.238 | 194.660 | 201.383 | 0.59 | 35210 |
+    | nethermind_eastus_07 | nethermind_we_08 | 31.541 | 39.041 | 193.107 | 208.030 | 0.58 | 34486 |
+    | nethermind_eastus_07 | flashbots_we_09 | 30.992 | 36.886 | 192.134 | 203.846 | 0.60 | 34554 |
+    | flashbots_we_09 | flashbots_eastus_10 | 44.702 | 52.008 | 151.492 | 352.513 | 0.45 | 23666 |
+    | nethermind_we_08 | flashbots_mkosi_1 | 3.024 | 5.885 | 149.235 | 237.358 | -0.02 | 128776 |
+    | flashbots_we_09 | nethermind_eastus_07 | 51.533 | 53.694 | 135.308 | 214.133 | 0.65 | 23682 |
+    | flashbots_we_09 | beaver_eastus_07 | 46.286 | 51.180 | 131.223 | 213.616 | 0.58 | 23676 |
+    | beaver_we_08 | flashbots_eastus_10 | 42.202 | 45.092 | 124.000 | 320.903 | 0.46 | 21596 |
+    | beaver_we_08 | beaver_eastus_07 | 43.786 | 46.276 | 110.435 | 222.164 | 0.54 | 21630 |
+    | nethermind_we_08 | flashbots_we_09 | 0.300 | 4.165 | 88.781 | 154.436 | -0.01 | 105315 |
+    | flashbots_mkosi_1 | nethermind_we_08 | -1.529 | 1.878 | 84.565 | 172.061 | -0.02 | 109297 |
+    | beaver_we_08 | nethermind_eastus_07 | 49.078 | 50.298 | 62.551 | 215.596 | 0.82 | 21608 |
+    | nethermind_eastus_07 | flashbots_eastus_10 | -0.662 | -2.668 | 58.648 | 220.645 | 0.06 | 35305 |
+    | flashbots_mkosi_1 | beaver_we_08 | -0.075 | 2.209 | 57.603 | 115.534 | -0.02 | 95551 |
+    | flashbots_eastus_10 | beaver_eastus_07 | 2.506 | 5.522 | 56.186 | 188.124 | 0.02 | 35053 |
+    | flashbots_mkosi_1 | flashbots_we_09 | 2.188 | 9.008 | 52.778 | 91.397 | -0.00 | 95014 |
+    | nethermind_eastus_07 | beaver_eastus_07 | -4.514 | -1.465 | 49.629 | 194.338 | 0.02 | 35367 |
+    | flashbots_eastus_10 | nethermind_eastus_07 | -7.746 | -9.508 | 26.184 | 101.051 | 0.04 | 35048 |
+    | flashbots_we_09 | nethermind_we_08 | -1.307 | 3.241 | 17.573 | 83.503 | 0.02 | 23585 |
+    | beaver_we_08 | nethermind_we_08 | 1.076 | 3.533 | 14.321 | 98.753 | 0.03 | 21147 |
+    | flashbots_we_09 | flashbots_mkosi_1 | 3.017 | 4.058 | 11.831 | 43.950 | 0.06 | 23651 |
+    | beaver_we_08 | flashbots_mkosi_1 | 3.506 | 4.566 | 9.304 | 22.996 | 0.10 | 23289 |
+    | beaver_we_08 | flashbots_we_09 | 1.137 | 1.804 | 8.416 | 25.661 | 0.10 | 20771 |
+    | beaver_we_08 | flashbots_we_09 | -1.624 | -0.159 | 8.029 | 67.550 | 0.05 | 20979 |
+
+    </Accordion>
+</Accordions>
+
+As with the previous table, we can see the highest latency between the most active inter-region links, peaking at nearly 2s in p99. Another interesting result is the correlation with payload size (`corr_payload_size`): in normal working conditions (low p99s), it is more pronounced. This could mean a couple of things that will be useful to know later:
+
+- We’re not able to send large payloads in a single transmission (related to [BDP](https://en.wikipedia.org/wiki/Bandwidth-delay_product), which we’ll talk about below).
+- Preparing the order for transmission, or processing the order on the receiver side, takes a noticeably longer time the bigger the message. Some correlation is expected here, but it should be minimal. The main processing steps in the hot path here are JSON encoding / decoding, and signing / signature verification.
+
+## Improvements
+
+### Thread modelling
+
+FlowProxy runs with the [Tokio](https://docs.rs/tokio/latest/tokio/) asynchronous runtime. The initial implementation of the proxy indiscriminately used Tokio tasks for all different kind of workloads, including CPU intensive operations like signature recovery, signing and decoding transactions. This approach is not ideal because the runtime and its tasks are fundamentally optimized for non-blocking, I/O-bound work, and using it for other [blocking or CPU-bound work](https://docs.rs/tokio/latest/tokio/index.html#cpu-bound-tasks-and-blocking-code) *will* increase tail latencies.
+
+Tokio schedules many lightweight tasks onto a small number of OS threads. If a task performs CPU-heavy or blocking work, it can monopolise a worker thread, preventing other tasks from making progress. We suspected this could partly be causing some of the high tail latencies we were seeing.
+
+The Tokio authors recommend using [`tokio::task::spawn_blocking`](https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html), which we tried initially. This will spawn (or reuse) a thread managed by the runtime that is purely used for CPU-bound and blocking operations. However, this resulted in many more threads being spawned than we knew was necessary, and also had more overhead than expected. We didn’t dive into this too much, but intuitively it seemed like the blocking thread scheduler was not reusing threads effectively ([Github issue](https://github.com/BuilderNet/FlowProxy/pull/141)).
+
+To mitigate this, we introduced a configurable pool of specialised [rayon](https://docs.rs/rayon/latest/rayon/) threads for compute-heavy operations, and tweaked the number of Tokio worker threads to match production environment requirements. This setup allows also to have a healthy environment where can control how much resources a certain service is using, since the same machine would also run other processes like the block builder.
+
+**Side Note**
+
+While experimenting with the parameters, we observed how moving *some* specific compute-heavy operations resulted in a worse order processing latency. An interesting learning was that on a busy machine with many threads, sending tasks off to a different thread than the currently executing one *can* increase latency significantly. The cost of scheduling a new thread (context switching, waiting) should be taken into account, and is very context dependent!
+
+### HTTP/2
+
+HTTP/2 was designed to address various performance limitations of HTTP/1.1 while keeping the same semantics. Among various improvements, the most impactful for FlowProxy is **multiplexing**: with HTTP/1.1 only one request/response can be in flight per TCP connection (called *head-of-line blocking),* while HTTP/2 allows multiplexing multiple requests and responses over a single TCP connection, using *streams*.
+
+Streams are logical, bidirectional channels within one connection. They’re managed by *windows*: credit-based flow control mechanisms to limit how much data can be sent on a single stream, to ensure it doesn’t starve the connection. This multiplexing allowed us to greatly reduce the number of open connections, and improve connection reuse, which we already hinted was a source of message loss.
+
+Upgrading to HTTP/2 was the first improvement we rolled out, because of its complete backwards compatibility: communication between and towards instances running on a previous version of FlowProxy would simply fallback to HTTP/1.1.
+
+Below, you can see how the number of failures (read: lost messages) have been essentially reduced to 0 after its deployment.
+
+![HTTP failures after deployment of HTTP/2](/flowproxy-approaching-optimality/http-failures.png)
+<small>HTTP failures after deployment of HTTP/2</small>
+
+While request failures dropped, latency didn’t significantly improve. In particular, we’ve observed some improvement over small requests (with body size less than 32KiB) over inter-regional links, as we can see below. However, for same-region requests and bigger messages the situation remained identical or slightly worsened. 
+
+![RPC call duration latency (p99) before and after the deployment of HTTP/2.](/flowproxy-approaching-optimality/http2-latency.png)
+<small>RPC call duration latency (p99) before and after the deployment of HTTP/2.</small>
+
+This was a very different result compared to our staging environment, consisting of four nodes distributed between East US and West Europe. We think the main culprit is an overall different topology and network load compared to the production environment, which would be hard to completely emulate. After this result, we started looking into tuning configurations.
+
+FlowProxy instances operate with a reverse [HAProxy](https://www.haproxy.org/) that sits before the user and system endpoint, with the latter used for internal orderflow sharing. The proxy exposes some [HTTP/2 tuning configurations](https://docs.haproxy.org/3.2/configuration.html#tune.h2.be.initial-window-size:~:text=%2D%20tune.h2,copy%2Dfwd%2Dsend) that could help further reducing latency and spikiness.
+
+The dimensions in which we could operate were:
+
+- The number of maximum open streams;
+- The size of the window buffers;
+- Creating dedicated clients for small and big requests.
+
+While tuning those resulted in marginal improvements, we were still working on high-level abstractions, without much control over the metal. Moreover, HTTP/2 windows play a similar role to TCP congestion control / window scaling, resulting in some overhead and confusion about how the two interoperate. Because of this, we decided to pause HTTP/2 tuning efforts, and focus on a full migration to raw TCP (with TLS) with the [msg-rs](https://github.com/chainbound/msg-rs) messaging library.
+
+**Bundle loss after HTTP/2**
+
+After the deployment of this improvement, we analyzed bundle loss once again (read a full analysis [**here**](https://www.notion.so/PUBLIC-FlowProxy-Bundle-Receipts-Analysis-v2-2a45abfafc1980a29bb9fda91b3dd16d?pvs=21)). The table below contains a day worth of data, that includes both periods of low activity and high activity. We can see that bundle loss has essentially disappeared. Sample for 2025-11-14:
+
+| src | dst | lost | total |
+| --- | --- | --- | --- |
+| nethermind_eastus_07 | beaver_we_08 | 28 | 8894080 |
+| beaver_eastus_07 | flashbots_eastus_10 | 8 | 3001624 |
+| beaver_eastus_07 | flashbots_we_09 | 8 | 11168780 |
+| beaver_eastus_07 | nethermind_eastus_07 | 8 | 30111251 |
+| beaver_eastus_07 | beaver_we_08 | 8 | 10864297 |
+| beaver_eastus_07 | nethermind_we_08 | 8 | 10069603 |
+| nethermind_eastus_07 | flashbots_we_09 | 10 | 9028245 |
+| nethermind_eastus_07 | nethermind_we_08 | 8 | 9052880 |
+| nethermind_eastus_07 | beaver_eastus_07 | 6 | 10309013 |
+| nethermind_eastus_07 | flashbots_eastus_10 | 5 | 10302474 |
+| flashbots_eastus_10 | beaver_we_08 | 14 | 9024652 |
+| flashbots_eastus_10 | nethermind_eastus_07 | 6 | 10443797 |
+| flashbots_eastus_10 | beaver_eastus_07 | 6 | 10458639 |
+| flashbots_eastus_10 | nethermind_we_08 | 4 | 9087691 |
+| flashbots_eastus_10 | flashbots_we_09 | 2 | 9115212 |
+
+<Accordions type="single">
+    <Accordion title="Full Table">
+    
+    | src | dst | count | total | loss pctg |
+    | --- | --- | --- | --- | --- |
+    | flashbots_test_1 | beaver_eastus_07 | 47 | 5297796 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_beaver_azure_westeurope_08 | 28 | 8894080 | 0% |
+    | buildernet_beaver_azure_westeurope_08 | buildernet_beaver_azure_eastus_07 | 24 | 5565633 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_flashbots_mkosi_test_1 | 18 | 9283988 | 0% |
+    | buildernet_beaver_azure_westeurope_08 | buildernet_nethermind_azure_eastus_07 | 16 | 5547538 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_flashbots_mkosi_test_1 | 16 | 10189003 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_beaver_azure_westeurope_08 | 14 | 9024652 | 0% |
+    | buildernet_beaver_azure_westeurope_08 | buildernet_flashbots_azure_eastus_10 | 10 | 5578403 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_flashbots_azure_westeurope_09 | 10 | 9028245 | 0% |
+    | buildernet_flashbots_mkosi_test_1 | buildernet_flashbots_azure_eastus_10 | 9 | 6146894 | 0% |
+    | buildernet_flashbots_mkosi_test_1 | buildernet_nethermind_azure_eastus_07 | 9 | 6222701 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_nethermind_azure_westeurope_08 | 8 | 9052880 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_flashbots_azure_eastus_10 | 8 | 3001624 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_flashbots_azure_westeurope_09 | 8 | 11168780 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_nethermind_azure_eastus_07 | 8 | 30111251 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_beaver_azure_westeurope_08 | 8 | 10864297 | 0% |
+    | buildernet_beaver_azure_eastus_07 | buildernet_nethermind_azure_westeurope_08 | 8 | 10069603 | 0% |
+    | buildernet_nethermind_azure_westeurope_08 | buildernet_flashbots_azure_eastus_10 | 7 | 6573168 | 0% |
+    | buildernet_flashbots_azure_westeurope_09 | buildernet_beaver_azure_eastus_07 | 7 | 6078754 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_beaver_azure_eastus_07 | 6 | 10309013 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_nethermind_azure_eastus_07 | 6 | 10443797 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_flashbots_mkosi_test_1 | 6 | 8967508 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_beaver_azure_eastus_07 | 6 | 10458639 | 0% |
+    | buildernet_nethermind_azure_westeurope_08 | buildernet_nethermind_azure_eastus_07 | 5 | 6513729 | 0% |
+    | buildernet_nethermind_azure_westeurope_08 | buildernet_beaver_azure_eastus_07 | 5 | 6194898 | 0% |
+    | buildernet_nethermind_azure_eastus_07 | buildernet_flashbots_azure_eastus_10 | 5 | 10302474 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_nethermind_azure_westeurope_08 | 4 | 9087691 | 0% |
+    | buildernet_flashbots_azure_westeurope_09 | buildernet_flashbots_azure_eastus_10 | 3 | 6117425 | 0% |
+    | buildernet_flashbots_azure_eastus_10 | buildernet_flashbots_azure_westeurope_09 | 2 | 9115212 | 0% |
+    | buildernet_flashbots_azure_westeurope_09 | buildernet_flashbots_mkosi_test_1 | 1 | 7617802 | 0% |
+    | buildernet_flashbots_mkosi_test_1 | buildernet_beaver_azure_westeurope_08 | 1 | 18836193 | 0% |
+    | buildernet_flashbots_mkosi_test_1 | buildernet_flashbots_azure_westeurope_09 | 1 | 18043957 | 0% |
+    | buildernet_nethermind_azure_westeurope_08 | buildernet_flashbots_mkosi_test_1 | 1 | 9123905 | 0% |
+    | buildernet_nethermind_azure_westeurope_08 | buildernet_beaver_azure_westeurope_08 | 1 | 13247037 | 0% |
+    | buildernet_flashbots_azure_westeurope_09 | buildernet_nethermind_azure_eastus_07 | 1 | 6076706 | 0% |
+    | buildernet_flashbots_mkosi_test_1 | buildernet_nethermind_azure_westeurope_08 | 1 | 7608331 | 0% |
+
+    </Accordion>
+</Accordions>
+
+**HTTP/2 latency**
+
+Below we can see a more complete before-after of latency between links. We can see that after HTTP/2 
+we see more bounded p99 and p999, while p50 and p90 stayed almost the same. While picking a single day 
+from both deployments may not be completely indicative, the behaviour remained quite consistent during the next days. 
+Latency comparison before and after HTTP/2 for a days worth of data (all numbers in milliseconds):
+
+| src | dst | p50_a | p50_b | Δp50 | p99_a | p99_b | Δp99 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| nethermind_we_08 | beaver_eastus_07 | 42 | 42 | ~0 | 458 | 155 | -303 |
+| nethermind_we_08 | flashbots_eastus_10 | 42 | 41 | -1 | 455 | 142 | -313 |
+| beaver_eastus_07 | nethermind_we_08 | 44 | 41 | -3 | 357 | 125 | -232 |
+| beaver_eastus_07 | flashbots_we_09 | 45 | 46 | +1 | 297 | 122 | -175 |
+| nethermind_eastus_07 | flashbots_we_09 | 48 | 45 | -3 | 299 | 120 | -179 |
+| flashbots_eastus_10 | nethermind_we_08 | 42 | 43 | +1 | 206 | 119 | -87 |
+| flashbots_eastus_10 | flashbots_we_09 | 43 | 44 | +1 | 206 | 106 | -100 |
+| flashbots_eastus_10 | beaver_eastus_07 | 43 | 44 | +1 | 284 | 131 | -153 |
+| nethermind_eastus_07 | beaver_eastus_07 | 39 | 41 | +2 | 200 | 96 | -104 |
+| beaver_eastus_07 | flashbots_eastus_10 | 40 | 41 | +1 | 197 | 103 | -94 |
+    
+## TCP + `bitcode`
+
+To preserve backwards compatibility, we offered a new TCP-only version of system API along with the existing HTTP/2 one. Using a new temporary endpoint allowed us to experiment with binary encoding format, so we could finally remove JSON which other than offering high decoding latency, resulted in ~50% bigger payloads than necessary due to encoding hex data as strings.
+
+First, we tried to look into `serde` compatible binary encoding formats, like `bincode` and MessagePack, but both of them do not have full feature compatibility with `serde_derive`. Because of that, we opted out from `serde` compatibility and went with [`bitcode`](https://github.com/SoftbearStudios/bitcode) instead, which currently sits at the top of the [Rust Serialization Benchmark](https://david.kolo.ski/rust_serialization_benchmark/) leaderboard.
+
+This was the result of both a switch to TCP (without any additional tuning yet), and migration from JSON to bitcode:
+
+![image.png](/flowproxy-approaching-optimality/tcp-latency.png)
+
+However, there’s a big caveat here: we only saw these levels of improvements on very specific links. The plot above depicts latency from a specifically broadcast-heavy instance: one that ingests and forwards a lot of orders. We barely saw any improvements on other instances, which led us down the rabbit hole of TCP kernel parameters.
+
+### Kernel Parameter Tuning
+
+In order to get the most of raw TCP sockets, it has been fundamental to tune kernel parameters to achieve optimised connections. To understand better the changes we’ve done, let’s brush up on some preliminaries.
+
+The *bandwidth-delay product*, or BDP, is a property of a network path, and is computed as the product of bandwidth, expressed in bytes per second, and round-trip time “delay”, expressed in second. In the context of TCP, it represents how much data the network can hold “in flight” before the sender must wait acknowledgments.
+
+Let’s make a concrete example: a node in FlowProxy has a upload bandwidth of 1 Gbps, and an Azure link between East US and West Europe is around 85ms ([source](https://learn.microsoft.com/en-us/azure/networking/azure-network-latency?tabs=Americas%2CEastUS)). 
+This results in a BDP of `1 Gbps × 85 ms = 85 Mbit = 10.625 MB`, meaning that is the theoretical maximum of data we can have unacknowledged in TCP, assuming ideal network conditions.
+
+Related to BDP is the *congestion window* (referred as `cwnd` in code). It is a core TCP mechanism that controls how much data a sender is allowed to have “in flight” (sent, but not yet acknowledged) at any given time. On the receiver side, there’s `rwnd` (the receive window), which determines how much unacknowledged data can accumulate at the receiver side before packets are dropped. The minimum of `cwnd` and `rwnd` determines your maximum throughput.
+
+One direct consequence of BDP is the following: if `min(cwnd, rwnd) < size(message)`, that message will need an **additional round trip to fully transmit!** 
+
+By definition, the theoretical maximum size of the congestion window for communicating over a link matches the BDP. That would mean there is no congestion at all! However, the network might not be always stable, and packet loss might happen and RTT may vary over time. As such, the congestion window dynamically adapts to the appropriate amount of unacknowledged data to not waste any resources. These mechanisms are called *TCP congestion control algorithms.* 
+
+All of these parameters can be modified in the Linux kernel with `sysctl`. The following are the most important:
+
+- `net.ipv4.tcp_congestion_control`: the default (`cubic`) worked for us.
+- `net.ipv4.tcp_window_scaling`: ensure this is turned on.
+- `net.ipv4.tcp_rmem`: sets the bounds for `rwnd`. Default and max had to be significantly increased, some multiple of your expected max message size is a good guideline. Linux will take care of autoscaling this if window scaling is turned on.
+
+Other than congestion algorithms, there are other settings that may impact the congestion window. One of them is called “slow start after idle”, which `sysctl` setting is `net.ipv4.tcp_slow_start_after_idle` . A connection is considered idle if a packet hasn’t been sent for a certain amount of time, computed as a function of the RTT, but with a default minimum of 200ms that we would be used in case of a 85ms RTT. In case of idleness, the congestion window is greatly reduced, diminishing throughput and increasing latency.
+
+Given connection between FlowProxy instances are long lived, and can be bursty in period of high-traffic, this setting should be disabled. In the picture below you can see the tremendous impact of the switch on low volume instances:
+
+![Call duration latency (p99) before and after the `net.ipv4.tcp_slow_start_after_idle` has been disabled.](/flowproxy-approaching-optimality/slow-start-latency.png)
+<small>Call duration latency (p99) before and after the `net.ipv4.tcp_slow_start_after_idle` has been disabled.</small>
+
+This setting was exactly why the high message volume instances displayed really good latency after the switch to TCP, and the others didn’t: their TCP connections were never idle, so the congestion windows were never reset.
+
+The general takeaway here is that Linux TCP settings are very conservative and always try to save on resources, and should almost always be changed depending on your workload.
+
+After all these modifications, we were finally approaching optimality in terms of order propagation: variance for big and small messages, over long and short links was reducing significantly. However, there was one more change that we knew would be impactful, not on latency but on CPU usage.
+
+### mTLS
+
+The last improvement we’ve been working on during this collaboration has been [mutual TLS](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) (mTLS). If required by the server, the client must present a valid X509 TLS certificate to authenticate itself. This works, because all instances know each others TLS certificates through a central service registry.
+
+Currently, FlowProxy authenticates other instances on a message-by-message basis: every message it gets needs to be signed by a known ECDSA public key. This is secure, but wasteful: every message needs to be a) signed by the sender, and b) verified by the receiver. mTLS would change authentication on a message basis, to authentication on a connection basis. Authentication would occur during connection setup, and after a successful authentication, all messages sent on that connection are transitively authenticated too.
+
+As of December 22, 2025, this feature hasn’t been deployed yet on a production environment, but from the picture below we can already appreciate its effects on the staging environment.
+
+![Global CPU usage and thread usage after deployment of mTLS on a staging environment.](/flowproxy-approaching-optimality/mtls-cpu.png)
+<small>Global CPU usage and thread usage after deployment of mTLS on a staging environment.</small>
+
+From this preliminary result we can see a 50% reduction of CPU and thread usage, lowering total CPU usage of FlowProxy from ~10% to 5%. While this may seem like a minor improvement, freeing up CPU to be used by other critical services such as rbuilder can make the difference between winning and losing a relay auction.
+
+## Next Steps
+
+At the moment we’re pretty satisfied with the performance of FlowProxy, but there is still room for improvement. In particular, we haven’t yet worked on the communication between a FlowProxy instance and its local builder, which still uses JSON-RPC over HTTP, although via localhost. Assuming these two services keep running on the same machine, we could implement a shared memory based transport. While this would be clearly a benefit over the status quo, we’re coming closer to a point of diminishing returns compared to other improvements.
+
+As such, next steps could move away from FlowProxy and concentrate over a different part of the stack of BuilderNet and its architecture.

@@ -9,12 +9,12 @@ interface BackLinkProps {
 export function BackLink({
     href = '/',
     label = 'Back',
-    className = 'mb-8',
+    className = 'mb-2',
 }: BackLinkProps) {
     return (
         <Link
             href={href}
-            className={`inline-flex items-center gap-2 text-sm text-fd-muted-foreground hover:text-fd-foreground transition-colors ${className}`}
+            className={`inline-flex items-center gap-2 text-sm text-fd-muted-foreground hover:text-fd-primary transition-colors font-[family-name:var(--font-at-hauss-mono)] ${className}`}
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
