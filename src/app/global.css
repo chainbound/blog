@@ -1,3 +1,9 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+@theme {
+    --color-fd-primary: #e8e2cd;
+    --color-fd-secondary: #e8e2cd;
+    /* --color-fd-secondary-foreground: #e8e2cd; */
+}

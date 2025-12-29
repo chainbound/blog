@@ -1,16 +1,48 @@
 import Link from 'next/link';
+import { blog } from '@/lib/source';
 
 export default function HomePage() {
-  return (
-    <div className="flex flex-col justify-center text-center flex-1">
-      <h1 className="text-2xl font-bold mb-4">Hello World</h1>
-      <p>
-        You can open{' '}
-        <Link href="/docs" className="font-medium underline">
-          /docs
-        </Link>{' '}
-        and see the documentation.
-      </p>
-    </div>
+  const posts = [...blog.getPages()].sort(
+    (a, b) =>
+      new Date(b.data.date).getTime() -
+      new Date(a.data.date).getTime(),
   );
+
+  return (
+    <main className="mx-auto w-full max-w-page px-4 pb-12 md:py-12">
+      <div className="relative dark mb-4 aspect-[3.2] p-8 z-2 md:p-12">
+        {/* <Image
+          src={BannerImage}
+          priority
+          alt="banner"
+          className="absolute inset-0 size-full -z-1 object-cover"
+        /> */}
+        <h1 className="mb-4 text-3xl text-landing-foreground font-medium">
+          Chainbound Blog
+        </h1>
+        <p className="text-sm text-landing-foreground-200">
+          Latest posts.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-4">
+        {posts.map((post) => (
+          <Link
+            key={post.url}
+            href={post.url}
+            className="flex flex-col bg-fd-card rounded-2xl border shadow-sm p-4 transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground"
+          >
+            <p className="font-medium">{post.data.title}</p>
+            <p className="text-sm text-fd-muted-foreground">
+              {post.data.description}
+            </p>
+
+            <p className="mt-auto pt-4 text-xs text-brand">
+              {new Date(post.data.date).toDateString()}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </main>
+  );
+
 }

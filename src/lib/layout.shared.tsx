@@ -3,7 +3,9 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: 'My App',
+      title: 'Chainbound Blog',
+      url: 'https://chainbound.io',
     },
+    githubUrl: 'https://github.com/chainbound'
   };
 }
