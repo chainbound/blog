@@ -1,5 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { blog } from '@/lib/source';
+import { getAuthor } from '@/lib/authors';
+
+const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 export default function HomePage() {
   const posts = [...blog.getPages()].sort(
@@ -9,40 +13,78 @@ export default function HomePage() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-page px-4 pb-12 md:py-12">
-      <div className="relative dark mb-4 aspect-[3.2] p-8 z-2 md:p-12">
-        {/* <Image
-          src={BannerImage}
-          priority
-          alt="banner"
-          className="absolute inset-0 size-full -z-1 object-cover"
-        /> */}
-        <h1 className="mb-4 text-3xl text-landing-foreground font-medium">
-          Chainbound Blog
-        </h1>
-        <p className="text-sm text-landing-foreground-200">
-          Latest posts.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-4">
-        {posts.map((post) => (
-          <Link
-            key={post.url}
-            href={post.url}
-            className="flex flex-col bg-fd-card rounded-2xl border shadow-sm p-4 transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground"
-          >
-            <p className="font-medium">{post.data.title}</p>
-            <p className="text-sm text-fd-muted-foreground">
-              {post.data.description}
-            </p>
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className={`text-3xl font-medium mb-12 text-center ${fontMono}`}>
+        Chainbound Blog
+      </h1>
 
-            <p className="mt-auto pt-4 text-xs text-brand">
-              {new Date(post.data.date).toDateString()}
-            </p>
-          </Link>
-        ))}
+      <div className="flex flex-col gap-8">
+        {posts.map((post) => {
+          const authorDetails = post.data.authors.map(getAuthor);
+
+          return (
+            <Link
+              key={post.url}
+              href={post.url}
+              className="group flex flex-col border-b border-fd-border pb-8 transition-colors"
+            >
+              <div>
+                <h2 className={`text-xl font-medium mb-2 group-hover:text-fd-primary transition-colors ${fontMono}`}>
+                  {post.data.title}
+                </h2>
+
+                <p className="text-fd-muted-foreground mb-4">
+                  {post.data.description}
+                </p>
+
+                <div className={`flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground ${fontMono}`}>
+                  <div className="flex items-center gap-2">
+                    {authorDetails.map((author) => (
+                      <span key={author.name} className="inline-flex items-center gap-1.5">
+                        {author.avatar && (
+                          <Image
+                            src={author.avatar}
+                            alt={author.name}
+                            width={20}
+                            height={20}
+                            className="rounded-full"
+                          />
+                        )}
+                        <span className="text-fd-foreground">
+                          {author.name}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+
+                  <span>·</span>
+
+                  <time>
+                    {new Date(post.data.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </div>
+
+                {post.data.tags && post.data.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {post.data.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className={`inline-flex items-center rounded-full border border-fd-primary/20 bg-fd-primary/10 px-2.5 py-0.5 text-xs font-medium text-fd-primary ${fontMono}`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </main>
   );
-
 }
