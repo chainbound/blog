@@ -8,7 +8,7 @@ export const authors = {
     name: 'lorenzo',
     url: 'https://x.com/thedevbirb',
     avatar: 'https://unavatar.io/twitter/thedevbirb',
-  }
+  },
   // Add more authors here
 } as const;
 
@@ -28,4 +28,3 @@ export function getAuthor(id: string): Author {
   // Fallback for unknown authors
   return { name: id, url: null, avatar: null };
 }
-

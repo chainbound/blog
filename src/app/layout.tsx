@@ -8,7 +8,7 @@ const atHaussMono = localFont({
   src: '../fonts/AtHaussMono-Regular.otf',
   display: 'swap',
   variable: '--font-at-hauss-mono',
-})
+});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,7 +22,11 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${inter.className} ${atHaussMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.className} ${atHaussMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex flex-col min-h-screen">
         <RootProvider>{children}</RootProvider>
       </body>

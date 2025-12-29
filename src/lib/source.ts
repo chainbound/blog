@@ -6,7 +6,7 @@ import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 export const blog = loader({
   baseUrl: '/',
   source: toFumadocsSource(posts, []),
-})
+});
 
 export function getPageImage(page: InferPageType<typeof blog>) {
   const segments = [...page.slugs, 'image.png'];

@@ -3,28 +3,28 @@
 @import 'fumadocs-ui/css/preset.css';
 
 .light {
-    --color-fd-primary: rgb(238, 184, 21);
+  --color-fd-primary: rgb(238, 184, 21);
 }
 
 .dark {
-    --color-fd-primary: rgb(255, 200, 55);
+  --color-fd-primary: rgb(255, 200, 55);
 }
 
 /* Apply mono font to ToC (sidebar and popover) */
 #nd-toc,
 [data-toc-popover] {
-    font-family: var(--font-at-hauss-mono);
+  font-family: var(--font-at-hauss-mono);
 }
 
 /* Apply mono font to navbar */
 #nd-nav {
-    font-family: var(--font-at-hauss-mono);
+  font-family: var(--font-at-hauss-mono);
 }
 
 /* Style image captions */
 article small {
-    display: block;
-    text-align: center;
-    color: var(--color-fd-muted-foreground);
-    font-size: 0.875rem;
+  display: block;
+  text-align: center;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.875rem;
 }

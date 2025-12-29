@@ -7,9 +7,7 @@ const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 export default function HomePage() {
   const posts = [...blog.getPages()].sort(
-    (a, b) =>
-      new Date(b.data.date).getTime() -
-      new Date(a.data.date).getTime(),
+    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
   );
 
   return (
@@ -29,7 +27,9 @@ export default function HomePage() {
               className="group flex flex-col border-b border-fd-border pb-8 transition-colors"
             >
               <div>
-                <h2 className={`text-xl font-medium mb-2 group-hover:text-fd-primary transition-colors ${fontMono}`}>
+                <h2
+                  className={`text-xl font-medium mb-2 group-hover:text-fd-primary transition-colors ${fontMono}`}
+                >
                   {post.data.title}
                 </h2>
 
@@ -37,10 +37,15 @@ export default function HomePage() {
                   {post.data.description}
                 </p>
 
-                <div className={`flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground ${fontMono}`}>
+                <div
+                  className={`flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground ${fontMono}`}
+                >
                   <div className="flex items-center gap-2">
                     {authorDetails.map((author) => (
-                      <span key={author.name} className="inline-flex items-center gap-1.5">
+                      <span
+                        key={author.name}
+                        className="inline-flex items-center gap-1.5"
+                      >
                         {author.avatar && (
                           <Image
                             src={author.avatar}

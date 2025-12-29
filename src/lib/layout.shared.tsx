@@ -24,6 +24,6 @@ export function baseOptions(): BaseLayoutProps {
         </>
       ),
     },
-    githubUrl: 'https://github.com/chainbound'
+    githubUrl: 'https://github.com/chainbound',
   };
 }

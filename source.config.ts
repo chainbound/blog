@@ -34,7 +34,7 @@ export const posts = defineCollections({
   postprocess: {
     includeProcessedMarkdown: true,
   },
-})
+});
 
 export default defineConfig({
   mdxOptions: {
