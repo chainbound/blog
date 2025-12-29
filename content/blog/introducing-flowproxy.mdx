@@ -35,9 +35,9 @@ builders will be able to collaborate, and the more blocks BuilderNet as a whole
 will win. If a proxy goes down for even a couple of seconds, that could mean
 1000s of lost orders, so reliability is crucial too.
 
-![Simplified diagram of BuilderNet topology](attachment:73182f15-8d3c-4081-b44c-e62616e3e605:image.png)
+![Simplified diagram of BuilderNet topology](/introducing-flowproxy/topology.png)
 
-Simplified diagram of BuilderNet topology
+<small>Simplified diagram of BuilderNet topology</small>
 
 For all of these reasons, it was decided that the successor to the legacy proxy
 should be written in Rust. We were tasked with taking over the initial work and
@@ -83,7 +83,7 @@ profiled the application with perf and flamegraph. With some additional tooling,
 we could very quickly iterate on changes and see the direct impact in the form
 of outputs like (printout of `./sim.sh process`):
 
-```bash
+```
 Processing results/bundle_receipts_2025-10-03-08-57-50_runtime-5m_scale-5.parquet, results/proxy1_eth0_2025-10-03-08-57-50_runtime-5m_scale-5_summary.csv and results/proxy2_eth0_2025-10-03-08-57-50_runtime-5m_scale-5_summary.csv...
 Number of rows:
    ┌─count(bundle_hash)─┐
@@ -104,7 +104,7 @@ Bandwidth usage data:
 
 Or flamegraphs like:
 
-![image.png](attachment:26ce9576-385a-48d3-bb7a-fc384e69cd42:image.png)
+![Flamegraph image](/introducing-flowproxy/flamegraph.png)
 
 We won’t go into all the information that is displayed here, but it allowed us
 to identify processing bottlenecks, bandwidth usage, and network latencies. It
@@ -149,11 +149,13 @@ Signature verification happens in roughly 3 places:
 3. Verifying the `X-Flashbots-Signature` header when receiving orders from other
    proxies (on the system endpoint).
 
-![CPU profile on an ingress-only proxy: blue box is `X-Flashbots-Signature` header verification, purple box is transaction signature verification. Together they account for roughly 40% of CPU time spent.](attachment:fcba6c0a-91ff-4c2a-b8d6-3be94d599fa5:image.png)
+![Flamegraph image](/introducing-flowproxy/flamegraph-ecdsa.png)
 
-CPU profile on an ingress-only proxy: blue box is `X-Flashbots-Signature` header
-verification, purple box is transaction signature verification. Together they
-account for roughly 40% of CPU time spent.
+<small>
+  CPU profile on an ingress-only proxy: blue box is `X-Flashbots-Signature`
+  header verification, purple box is transaction signature verification.
+  Together they account for roughly 40% of CPU time spent.
+</small>
 
 Verifying the signature headers on user requests is absolutely necessary to
 authenticate and score users, but could we decrease the other types of
@@ -163,14 +165,16 @@ store the result of transaction signature recovery (the signer) in a small cache
 that maps transaction hashes to signer addresses, and do a very cheap lookup on
 any incoming transactions to reuse the verification result. By doing this **we
 have observed instances on Mainnet showing a transaction signature recovery
-cache hit ratio of up to 70%**, \**\*\*meaning that *time spent validating
-transaction signatures in bundles has been decreased by the same amount\*.
+cache hit ratio of up to 70%**, meaning that _time spent validating transaction
+signatures in bundles has been decreased by the same amount_.
 
-![Proxy v2 running with transaction signature cache. For this instance we have that 68% of the requests received contain already processed transactions for which we can skip signature recovery. TTL applied is 36s.](attachment:117fab4e-6071-4a62-8e3a-3646e2f4b161:image.png)
+![Cache hit ratio](/introducing-flowproxy/cache-hit-ratio.png)
 
-Proxy v2 running with transaction signature cache. For this instance we have
-that 68% of the requests received contain already processed transactions for
-which we can skip signature recovery. TTL applied is 36s.
+<small>
+  Proxy v2 running with transaction signature cache. For this instance we have
+  that 68% of the requests received contain already processed transactions for
+  which we can skip signature recovery. TTL applied is 36s.
+</small>
 
 Verifying system signatures (point 3 above) is another issue that we haven’t
 addressed yet. We’ll revisit this in the next steps section below.
@@ -186,21 +190,21 @@ These 2 graphs show the P99 of cross-regional RPC call durations for the v1 and
 v2 proxies. The first pair is small requests, and the second pair is for big
 requests (> 50KB).
 
-![Proxy v1, small requests (< 50KB). Range over 2 days: **137ms** **→ 3.6sec**](attachment:1659d983-4203-4b39-a6d7-cceb0087aa9e:image.png)
+![Graph](/introducing-flowproxy/proxy-v1-small-latency.png)
 
-Proxy v1, small requests (< 50KB). Range over 2 days: **137ms** **→ 3.6sec**
+<small>Proxy v1, small requests (< 50KB). Range over 2 days: **137ms** **→ 3.6sec**</small>
 
-![Proxy v2, small requests (< 50KB). Range over 2 days: **85ms → 2sec**](attachment:415fbf01-4ea6-483a-a021-cb8a282f277f:image.png)
+![Graph](/introducing-flowproxy/proxy-v2-small-latency.png)
 
-Proxy v2, small requests (< 50KB). Range over 2 days: **85ms → 2sec**
+<small>Proxy v2, small requests (< 50KB). Range over 2 days: **85ms → 2sec**</small>
 
-![Proxy v1, big requests (> 50KB). Range over 2 days: **260ms → 2.8sec**](attachment:f3e14643-459f-496b-a0fa-4c85a1051b64:image.png)
+![Graph](/introducing-flowproxy/proxy-v1-big-latency.png)
 
-Proxy v1, big requests (> 50KB). Range over 2 days: **260ms → 2.8sec**
+<small>Proxy v1, big requests (> 50KB). Range over 2 days: **260ms → 2.8sec**</small>
 
-![Proxy v2, big requests (> 50KB). Range over 2 days: **85ms → 2sec**](attachment:d6a98ce2-f841-40a7-b2a6-d722a8f9d62a:image.png)
+![Graph](/introducing-flowproxy/proxy-v2-big-latency.png)
 
-Proxy v2, big requests (> 50KB). Range over 2 days: **85ms → 2sec**
+<small>Proxy v2, big requests (> 50KB). Range over 2 days: **85ms → 2sec**</small>
 
 ## Lessons Learned
 
@@ -255,7 +259,11 @@ the server side of any proxy, many more than before. Additionally, the number of
 timeouts increased drastically, which would result in lost orders if not dealt
 with.
 
-![Connection attempts from other proxies on the server side. Spot the upgrade.](attachment:e981786d-daf0-4c51-85b9-78b1ab11d7ee:image.png)
+![Graph of connection attempts](/introducing-flowproxy/connections.png)
+
+<small>
+  Connection attempts from other proxies on the server side. Spot the upgrade.
+</small>
 
 Connection attempts from other proxies on the server side. Spot the upgrade.
 
@@ -296,17 +304,16 @@ This issue was fixed by increasing the idle timeout on the server to 30s, and
 ensuring every HTTP client is configured with an idle timeout slightly less than
 that. The results can be seen on this server panel:
 
-![image.png](attachment:682bc74f-811f-4406-97fb-e398910cad94:image.png)
-
+![Graph of connection attempts after](/introducing-flowproxy/connections-after.png)
 In addition, the HTTP timeouts for long RTT links also decreased since then:
 
-![image.png](attachment:20398a37-d11e-45f3-91be-8603d209d1d1:image.png)
+![image.png](/introducing-flowproxy/http-failures.png)
 
 As well as p99 round-trip latencies on those links:
 
-![Y-axis is logarithmic, p99 dropped from ~125ms to ~95ms.](attachment:caf72131-631e-44aa-a670-787417920034:image.png)
+![Graph of p99 latency](/introducing-flowproxy/rpc-latency.png)
 
-Y-axis is logarithmic, p99 dropped from ~125ms to ~95ms.
+<small>Y-axis is logarithmic, p99 dropped from ~125ms to ~95ms.</small>
 
 The p99 improvement can be attributed to the decrease in these cascading
 connection failures, which always resulted in a higher RPC latency (since
