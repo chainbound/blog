@@ -20,17 +20,17 @@ In
 [Chainbound](https://chainbound.io/) collaborated with Flashbots to deprecate
 its [original orderflow proxy](https://github.com/flashbots/buildernet-orderflow-proxy) implementation
 in Go in favor of a new one built in Rust, created with the goal of reducing
-end-to-end latency, improving efficiency, and increasing observability in BuilderNet's
-networking layer. This first collaboration aimed at bringing it to
+end-to-end latency, improving efficiency, and increasing observability in
+BuilderNet's networking layer. This first collaboration aimed at bringing it to
 production-ready quality and ready for deployment, already observing good
 improvements in networking and processing latency.
 
 This second collaboration expanded on the _Next Steps_ section outlined in the
 previous report, with success. It includes a quantitative analysis of order
 losses and latencies across BuilderNet, and extensive work to improve the
-transport layer to reduce both CPU and memory usage. We
-encountered a couple of non-obvious learnings that we outline below, and we hope
-this will be useful to the community.
+transport layer to reduce both CPU and memory usage. We encountered a couple of
+non-obvious learnings that we outline below, and we hope this will be useful to
+the community.
 
 ## Network Analysis
 
@@ -230,8 +230,8 @@ To mitigate this, we introduced a configurable pool of specialised
 [rayon](https://docs.rs/rayon/latest/rayon/) threads for compute-heavy
 operations, and tweaked the number of Tokio worker threads to match production
 environment requirements. This setup allows also to have a healthy environment
-where we can control how much resources a certain service is using, since the same
-machine would also run other processes like the block builder.
+where we can control how much resources a certain service is using, since the
+same machine would also run other processes like the block builder.
 
 **Side Note**
 

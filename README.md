@@ -56,6 +56,7 @@ the blog post using the following syntax:
 The blog is deployed to Vercel on every push to the `main` branch.
 
 Before deploying, run the following checklist:
+
 - `bun format` to format the codebase and MDX files.
 - `bun run build` to build the project, this can fail even if `bun dev` works.
 - Spell check your newly added blog posts with an LLM tool.
