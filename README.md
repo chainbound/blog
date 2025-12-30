@@ -11,6 +11,18 @@ bun dev
 
 Open http://localhost:3000 with your browser to see the result.
 
+Format the code:
+
+```bash
+bun format
+```
+
+Test a full build:
+
+```bash
+bun run build
+```
+
 ## Content
 
 Blog contents are stored in the [`content/blog`](content/blog) directory. Each
@@ -40,6 +52,7 @@ the blog post using the following syntax:
 ```
 
 ## Deployment
+
 The blog is deployed to Vercel on every push to the `main` branch.
 
 ## Fuma Docs

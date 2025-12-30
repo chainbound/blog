@@ -9,6 +9,7 @@ import {
 } from 'fumadocs-ui/layouts/docs/page';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
+import { Calendar } from 'lucide-react';
 import { blog } from '@/lib/source';
 import { BackLink } from '@/components/back-link';
 import { getAuthor } from '@/lib/authors';
@@ -63,7 +64,7 @@ export default async function Page(props: {
       <div
         className={`flex flex-wrap items-center gap-4 text-sm text-fd-muted-foreground mb-4 ${fontMono}`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {authorDetails.map((author) => (
             <span
               key={author.name}
@@ -93,8 +94,9 @@ export default async function Page(props: {
             </span>
           ))}
         </div>
-        <span>·</span>
-        <time>
+        {/* <span>·</span> */}
+        <time className="inline-flex items-center gap-1.5">
+          <Calendar className="size-4" />
           {new Date(page.data.date).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',

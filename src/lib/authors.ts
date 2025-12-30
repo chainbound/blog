@@ -9,6 +9,11 @@ export const authors = {
     url: 'https://x.com/thedevbirb',
     avatar: 'https://unavatar.io/twitter/thedevbirb',
   },
+  pierre: {
+    name: 'Pierre-Louis',
+    url: 'https://yousername.gitlab.io/',
+    avatar: 'https://unavatar.io/github/plroman',
+  },
   // Add more authors here
 } as const;
 

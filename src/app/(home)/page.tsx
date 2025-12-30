@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { blog } from '@/lib/source';
 import { getAuthor } from '@/lib/authors';
+import { Calendar } from 'lucide-react';
 
 const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
@@ -40,7 +41,7 @@ export default function HomePage() {
                 <div
                   className={`flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground ${fontMono}`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     {authorDetails.map((author) => (
                       <span
                         key={author.name}
@@ -62,9 +63,8 @@ export default function HomePage() {
                     ))}
                   </div>
 
-                  <span>·</span>
-
-                  <time>
+                  <time className="inline-flex items-center gap-1.5">
+                    <Calendar className="size-4" />
                     {new Date(post.data.date).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
