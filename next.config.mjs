@@ -13,6 +13,17 @@ const config = {
       },
     ],
   },
+
+  // Redirects for the old blog posts
+  async redirects() {
+    return [
+      {
+        source: '/blob-propagation-with-peerdas',
+        destination: '/peerdas-propagation',
+        permanent: true,
+      }
+    ]
+  }
 };
 
 export default withMDX(config);
