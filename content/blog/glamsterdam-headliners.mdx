@@ -1,0 +1,53 @@
+---
+title: 'Glamsterdam Headliners'
+authors: [lorenzo]
+date: 2025-04-08
+tags: [ethereum, scaling]
+---
+
+<Callout type="info">
+The following document contains Chainbound’s take on what the headliners should be on the upcoming Glamsterdam hard-fork of Ethereum, according to the format specified in this [ethereum-magicians post](https://ethereum-magicians.org/t/soliciting-stakeholder-feedback-on-glamsterdam-headliners/24885).
+</Callout>
+
+## Priorities
+
+**Question: What do you view as the top priority theme in this fork & why?**
+
+*e.g. censorship resistance, scaling the L1, improving UX, etc.*
+
+We see scaling the L1 in terms of throughput and lowering fees as the main theme for this fork. If done properly, without introducing new negative externalities and by lowering down the technical debt of the protocol, it has downstream effects in both the rollup roadmap and for improving UX for a wide variety of users. This process makes Ethereum as a global platform more attractive for everyone, fostering its growth in multiple directions.
+
+We see also censorship resistance as an equally important part of the roadmap, however we’re not completely satisfied with current proposals, as motived below.
+
+## Headliners
+
+**Question: Which EIP(s) do you favor as a headliner for Glamsterdam?**
+
+<Callout type="idea">
+The process is aiming for one EIP each for the consensus and execution layers.
+</Callout>
+
+Execution Layer: EIP-7928 — Block Level Access list. This is clearly a low-hanging fruit improvement that is both future-proof (e.g. non-contentious with EVM upgrades) and with basically no tradeoffs. It benefits a wide variety of users: both users of L1 dApps because of cheaper usage of read/writes on storage, and users on L2s, as carefully explained by @donnoh.
+
+Consensus Layer: EIP-7732 — enshrined Proposer-Bulider Separation. This EIP creates a framework to better spreads tasks and resources over the slot, favoring both home-stakers and future improvements like APS and ETs. We basically agree with what’s mentioned in this [post](https://ethereum-magicians.org/t/eip-7732-the-case-for-inclusion-in-glamsterdam/24306#p-59218-detailed-justification-3).
+We acknowledge the following open questions of the proposal:
+
+- The existence of the “[Free Option Problem](https://collective.flashbots.net/t/the-free-option-problem-in-epbs/5115)” — Thanks to some comments (see [here](https://collective.flashbots.net/t/the-free-option-problem-in-epbs/5115/2) and [here](https://x.com/hasufl/status/1949093915950186547)), we consider it more an independent problem of the already existing PBS market structure. In our opinion, this EIP more concerned with efficient slot restructuring rather than enshrining a specific market structure. For example, by requiring a validator signature over the transaction list in the execution header, we could keep the pipelining benefits while killing the PBS market structure.
+- DA attestation deadline — The current proposal states that the payload and the blobs must be observed by the Payload-Timeliness-Committee at the same time. As such, moving the PTC deadline to favour execution time would result in less blob propagation time. To contrast this, we’re fully supportive of the [Dual-deadline PTC vote](https://notes.ethereum.org/@anderselowsson/Dual-deadlinePTCvote) proposal.
+
+Lastly, we mark EIP-7805 (FOCIL) as the second best candidate for the Glamsterdam CL headliner. However, we have minor questions regarding its implementation, expressed in the “concern” section.
+
+## Concerns
+
+**Question: The leading headliners among client teams are described in a [series of blog posts listed here](https://forkcast.org/upgrade/glamsterdam#client-team-perspectives). Do you have any concerns about any particular proposal?**
+
+As mentioned above, we consider FOCIL as the 2nd best option for the CL headliner in Glamsterdam. However, we have some minor concerns about its implementation: 
+
+1. It doesn’t support blob transactions, so it means support for it must come in another hard-fork that might change how blob transactions are propagated. While some proposals do exist (for example, our own [blob notaries design](https://ethresear.ch/t/blob-notaries-a-distributed-blob-publishing-design-to-scale-da/22709)), there isn’t a concrete roadmap to make it happen as far as we know. With Ethereum doubling down in increasing its blob count, supporting them becomes more and more relevant.
+2. For rollups, if censored, settling becomes much harder due to the 8KiB as max IL size. Moreover, recent updates such as [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) make using large amount of calldata more expensive than before.
+3. The current proposal of FOCIL states that [the inclusion list building logic is up to the consensus clients implementation](https://eips.ethereum.org/EIPS/eip-7805#il-building). In our opinion, assessing which transactions are being censored is a very hard task, unless explicitly part of the OFAC list. This would lead to a risk of wasting a small yet extremely precious resource. Examples include:
+    1. Picking at random from the mempool can lead to not choosing a censored transaction for some slots in a row, degrading eventual censorship resistance UX.
+    2. Picking the highest paying transactions can lead to IL members picking the same small subset of mempool transactions that fit in a 8KiB IL.
+    3. Picking transactions that have been in the mempool for a while can incentivise non-censored users flooding with low-priority transactions (e.g. 1 wei priority fee).
+    
+    While we acknowledge the difficulty of this problem, we see more suited a design where the user explicitly ask for its transaction to be force-included in the next blocks in exchange for a tip. A tip is justified to avoid spam and because the service done by the protocol is converting from probabilistic inclusion to deterministic inclusion.
