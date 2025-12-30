@@ -21,7 +21,21 @@ export const metadata: Metadata = {
   },
   description: 'Technical blog by Chainbound',
   icons: {
-    icon: '/black-logo.svg',
+    icon: [
+      // Light mode - dark icon
+      {
+        url: '/black-logo.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+      },
+      // Dark mode - light icon
+      {
+        url: '/white-logo.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
+    apple: '/favicon.ico',
   },
 };
 
