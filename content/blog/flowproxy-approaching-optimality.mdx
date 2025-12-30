@@ -20,15 +20,15 @@ In
 [Chainbound](https://chainbound.io/) collaborated with Flashbots to deprecate
 its [original orderflow proxy](https://github.com/flashbots/buildernet-orderflow-proxy) implementation
 in Go in favor of a new one built in Rust, created with the goal of reducing
-end-to-end latency, efficiency and increasing observability in BuilderNet’s
+end-to-end latency, improving efficiency, and increasing observability in BuilderNet's
 networking layer. This first collaboration aimed at bringing it to
 production-ready quality and ready for deployment, already observing good
 improvements in networking and processing latency.
 
 This second collaboration expanded on the _Next Steps_ section outlined in the
 previous report, with success. It includes a quantitative analysis of order
-losses and latencies across BuilderNet and extensive work to improve the
-transport used for communicating and reduce both CPU and memory usage. We
+losses and latencies across BuilderNet, and extensive work to improve the
+transport layer to reduce both CPU and memory usage. We
 encountered a couple of non-obvious learnings that we outline below, and we hope
 this will be useful to the community.
 
@@ -230,7 +230,7 @@ To mitigate this, we introduced a configurable pool of specialised
 [rayon](https://docs.rs/rayon/latest/rayon/) threads for compute-heavy
 operations, and tweaked the number of Tokio worker threads to match production
 environment requirements. This setup allows also to have a healthy environment
-where can control how much resources a certain service is using, since the same
+where we can control how much resources a certain service is using, since the same
 machine would also run other processes like the block builder.
 
 **Side Note**
@@ -386,7 +386,7 @@ Below we can see a more complete before-after of latency between links. We can
 see that after HTTP/2 we see more bounded p99 and p999, while p50 and p90 stayed
 almost the same. While picking a single day from both deployments may not be
 completely indicative, the behaviour remained quite consistent during the next
-days. Latency comparison before and after HTTP/2 for a days worth of data (all
+days. Latency comparison before and after HTTP/2 for a day's worth of data (all
 numbers in milliseconds):
 
 | src                  | dst                 | p50_a | p50_b | Δp50 | p99_a | p99_b | Δp99 |
@@ -515,7 +515,7 @@ The last improvement we’ve been working on during this collaboration has been
 [mutual TLS](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)
 (mTLS). If required by the server, the client must present a valid X509 TLS
 certificate to authenticate itself. This works, because all instances know each
-others TLS certificates through a central service registry.
+other's TLS certificates through a central service registry.
 
 Currently, FlowProxy authenticates other instances on a message-by-message
 basis: every message it gets needs to be signed by a known ECDSA public key.
