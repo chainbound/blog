@@ -51,9 +51,13 @@ export default async function Page(props: {
   const Mdx = page.data.body;
   const authorDetails = page.data.authors.map(getAuthor);
 
+  // Filter the TOC to only include headings up to a certain depth
+  const maxTocDepth = 3;
+  const filteredToc = page.data.toc.filter((item) => item.depth <= maxTocDepth);
+
   return (
     <DocsPage
-      toc={page.data.toc}
+      toc={filteredToc}
       tableOfContent={{ style: 'clerk', single: true }}
     >
       <BackLink />
