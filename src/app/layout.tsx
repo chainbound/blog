@@ -15,6 +15,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  title: {
+    default: 'Chainbound Blog',
+    template: '%s | Chainbound Blog',
+  },
+  description: 'Technical blog by Chainbound',
   icons: {
     icon: '/black-logo.svg',
   },
