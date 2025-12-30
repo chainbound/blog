@@ -11,12 +11,11 @@ TLDR; This article analyzes various key Ethereum network metrics to measure the
 impact of PeerDAS and increasing blob counts. These metrics include block + blob
 validation latency, attestation rates, and orphan rates. We find a clear
 correlation between higher blob counts with PeerDAS, and a negative change in
-said metrics
-([link to results summary](#summary-of-results)),
-and argue that especially with the competitive and latency-sensitive dynamics of
-PBS, this may impose artificial blob limits that are below any protocol-defined
-limits. In response to these issues, we outline a design for a network of
-supernodes that we want to build to help alleviate some of them.
+said metrics ([link to results summary](#summary-of-results)), and argue that
+especially with the competitive and latency-sensitive dynamics of PBS, this may
+impose artificial blob limits that are below any protocol-defined limits. In
+response to these issues, we outline a design for a network of supernodes that
+we want to build to help alleviate some of them.
 
 | Does blob count impact:        | Block latency?                                                    | Attestation rate?                                                    | Orphan block rate?                                          |
 | ------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -69,15 +68,14 @@ instead**. The measurements are made on
 2. Mainnet post-PeerDAS and BPO1 hence with a blob count of `(10, 15)`
 3. Hoodi post-PeerDAS and BPO2 with blob count of `(14, 21)`
 
-**Results
-[[summary table](#summary-of-results)]**.
-**Increasing the blob count incurs a clear worsening of both block latency and
-attestation rate** on almost all observed networks, both before and after
-PeerDAS alike. Additionally, we observed a worse tail latency after PeerDAS
-compared to before, and the tail latency increasingly worsens as the blob count
-increases. However, increasing the blob count has no noticeable impact on the
-orphan rate; some results are inconclusive and overall more data is required to
-have a meaningful conclusion regarding orphan rate.
+**Results [[summary table](#summary-of-results)]**. **Increasing the blob count
+incurs a clear worsening of both block latency and attestation rate** on almost
+all observed networks, both before and after PeerDAS alike. Additionally, we
+observed a worse tail latency after PeerDAS compared to before, and the tail
+latency increasingly worsens as the blob count increases. However, increasing
+the blob count has no noticeable impact on the orphan rate; some results are
+inconclusive and overall more data is required to have a meaningful conclusion
+regarding orphan rate.
 
 **Proposal:** 🌱 **Seeding network**. Considering the results of the analysis,
 we propose to add a network of specialized supernodes into the Ethereum network

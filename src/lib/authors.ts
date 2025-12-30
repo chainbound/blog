@@ -5,9 +5,14 @@ export const authors = {
     avatar: 'https://unavatar.io/twitter/mempirate',
   },
   lorenzo: {
-    name: 'lorenzo',
+    name: 'Lorenzo',
     url: 'https://x.com/thedevbirb',
     avatar: 'https://unavatar.io/twitter/thedevbirb',
+  },
+  nicolas: {
+    name: 'Nicolas',
+    url: 'https://x.com/merklefruit',
+    avatar: 'https://unavatar.io/twitter/merklefruit',
   },
   pierre: {
     name: 'Pierre-Louis',
