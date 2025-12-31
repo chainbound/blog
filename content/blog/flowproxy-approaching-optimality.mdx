@@ -134,8 +134,7 @@ during high congestion.
 
 <Accordions type="single">
     <Accordion title="Full Table">
-    
-    
+        
     | src | dst | p50_ms | p90_ms | p99_ms | p999_ms | corr_payload_size | observations |
     | --- | --- | --- | --- | --- | --- | --- | --- |
     | beaver_eastus_07 | nethermind_we_08 | 39.619 | 1668.253 | 1947.045 | 2005.370 | -0.06 | 27991 |
@@ -183,6 +182,11 @@ during high congestion.
     </Accordion>
 
 </Accordions>
+
+<Callout type="info">
+  The negative p50 latencies here are due to [clock
+  drift](https://en.wikipedia.org/wiki/Clock_drift).
+</Callout>
 
 As with the previous table, we can see the highest latency between the most
 active inter-region links, peaking at nearly 2s in p99. Another interesting

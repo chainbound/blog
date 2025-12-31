@@ -21,9 +21,9 @@ const config = {
         source: '/blob-propagation-with-peerdas',
         destination: '/peerdas-propagation',
         permanent: true,
-      }
-    ]
-  }
+      },
+    ];
+  },
 };
 
 export default withMDX(config);
