@@ -54,4 +54,6 @@ export interface GlobalMapProps {
   center?: [number, number];
   /** Zoom scale (default ~150 for world view, higher = more zoomed in) */
   scale?: number;
+  /** Show color legend for the metric. Default: false */
+  showLegend?: boolean;
 }
