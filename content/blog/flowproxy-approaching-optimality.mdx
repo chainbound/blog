@@ -717,7 +717,7 @@ Below we can see a more complete before-after of latency between links. We can
 see that after HTTP/2 we see more bounded p99 and p999, while p50 and p90 stayed
 almost the same. While picking a single day from both deployments may not be
 completely indicative, the behaviour remained quite consistent during the next
-days. Latency comparison before and after HTTP/2 for a day's worth of data (all
+days. Latency comparison of P99 latencies befor, each with 24 hours worth of datae and after HTTP/2 for a day's worth of data (all
 numbers in milliseconds):
 
 | src                  | dst                 | p50_a | p50_b | Δp50 | p99_a | p99_b | Δp99 |
@@ -835,9 +835,333 @@ The general takeaway here is that Linux TCP settings are very conservative and
 always try to save on resources, and should almost always be changed depending
 on your workload.
 
+### Latency Comparison
+
 After all these modifications, we were finally approaching optimality in terms
 of order propagation: variance for big and small messages, over long and short
-links was reduced significantly. There was one more change that we knew would be
+links was reduced significantly. Check out the full comparison of P99 latencies below, each with 24 hours worth of data:
+
+**Before**
+
+<GlobalMap
+  servers={[
+    {
+      id: 'beaver_eastus',
+      name: 'Beaver',
+      code: 'EUS',
+      coordinates: [-78.5, 38.9],
+    },
+    {
+      id: 'nethermind_eastus',
+      name: 'Nethermind',
+      code: 'EUS',
+      coordinates: [-76.5, 40.5],
+    },
+    {
+      id: 'flashbots_eastus',
+      name: 'Flashbots',
+      code: 'EUS',
+      coordinates: [-74.5, 39.7],
+    },
+    { id: 'beaver_we', name: 'Beaver', code: 'WE', coordinates: [4.9, 51.5] },
+    {
+      id: 'nethermind_we',
+      name: 'Nethermind',
+      code: 'WE',
+      coordinates: [6.9, 52.5],
+    },
+    {
+      id: 'flashbots_we',
+      name: 'Flashbots',
+      code: 'WE',
+      coordinates: [8.9, 50.5],
+    },
+  ]}
+  connections={[
+    // Transatlantic: Beaver EUS -> Europe (high latency routes)
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 1947.05 },
+      waypoints: [
+        [-42, 47],
+        [-18, 49],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 1789.05 },
+      waypoints: [
+        [-40, 48],
+        [-15, 50],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 1521.6 },
+      waypoints: [
+        [-42, 44],
+        [-18, 46],
+      ],
+    },
+    // US East local
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 292.45 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_eastus',
+      metrics: { latency: 58.65 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 49.63 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 56.19 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 26.18 },
+    },
+    // Transatlantic: Nethermind EUS -> Europe
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 194.66 },
+      waypoints: [
+        [-35, 43],
+        [-10, 45],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 193.11 },
+      waypoints: [
+        [-32, 50],
+        [-8, 52],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 192.13 },
+      waypoints: [
+        [-38, 46],
+        [-12, 48],
+      ],
+    },
+    // Transatlantic: Flashbots EUS -> Europe
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 201.54 },
+      waypoints: [
+        [-30, 41],
+        [-5, 44],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 200.27 },
+      waypoints: [
+        [-25, 47],
+        [0, 50],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 199.81 },
+      waypoints: [
+        [-28, 44],
+        [-3, 47],
+      ],
+    },
+  ]}
+  metricKey="latency"
+  metricRange={[0, 2000]}
+  height={350}
+  center={[-35, 45]}
+  scale={350}
+  showLegend={true}
+/>
+
+<small>
+  The maximum P99 here is ~1950ms.
+</small>
+
+**After**
+
+<GlobalMap
+  servers={[
+    {
+      id: 'beaver_eastus',
+      name: 'Beaver',
+      code: 'EUS',
+      coordinates: [-78.5, 38.9],
+    },
+    {
+      id: 'nethermind_eastus',
+      name: 'Nethermind',
+      code: 'EUS',
+      coordinates: [-76.5, 40.5],
+    },
+    {
+      id: 'flashbots_eastus',
+      name: 'Flashbots',
+      code: 'EUS',
+      coordinates: [-74.5, 39.7],
+    },
+    { id: 'beaver_we', name: 'Beaver', code: 'WE', coordinates: [4.9, 51.5] },
+    {
+      id: 'nethermind_we',
+      name: 'Nethermind',
+      code: 'WE',
+      coordinates: [6.9, 52.5],
+    },
+    {
+      id: 'flashbots_we',
+      name: 'Flashbots',
+      code: 'WE',
+      coordinates: [8.9, 50.5],
+    },
+  ]}
+  connections={[
+    // Transatlantic: Beaver EUS -> Europe
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 50.06 },
+      waypoints: [
+        [-42, 47],
+        [-18, 49],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 43.51 },
+      waypoints: [
+        [-40, 48],
+        [-15, 50],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 43.82 },
+      waypoints: [
+        [-42, 44],
+        [-18, 46],
+      ],
+    },
+    // US East local
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 7.55 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_eastus',
+      metrics: { latency: 9.0 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 7.55 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 4.4 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 2.25 },
+    },
+    // Transatlantic: Nethermind EUS -> Europe
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 47.88 },
+      waypoints: [
+        [-35, 43],
+        [-10, 45],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 46.47 },
+      waypoints: [
+        [-32, 50],
+        [-8, 52],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 48.87 },
+      waypoints: [
+        [-38, 46],
+        [-12, 48],
+      ],
+    },
+    // Transatlantic: Flashbots EUS -> Europe
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 42.32 },
+      waypoints: [
+        [-30, 41],
+        [-5, 44],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 45.89 },
+      waypoints: [
+        [-25, 47],
+        [0, 50],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 44.28 },
+      waypoints: [
+        [-28, 44],
+        [-3, 47],
+      ],
+    },
+  ]}
+  metricKey="latency"
+  metricRange={[0, 2000]}
+  height={350}
+  center={[-35, 45]}
+  scale={350}
+  showLegend={true}
+/>
+
+<small>
+  The maximum P99 here is ~50ms.
+</small>
+
+There was one more change that we knew would be
 impactful, not on latency but on CPU usage.
 
 ### mTLS
