@@ -767,9 +767,9 @@ changes we’ve done, let’s brush up on some preliminaries.
 
 The _bandwidth-delay product_, or BDP, is a property of a network path, and is
 computed as the product of bandwidth, expressed in bytes per second, and
-round-trip time “delay”, expressed in second. In the context of TCP, it
-represents how much data the network can hold “in flight” before the sender must
-wait acknowledgments.
+round-trip time (delay), expressed in seconds. In the context of TCP, it
+represents how much in-flight data the connection can hold before the sender
+must wait for acknowledgments from the receiver.
 
 Let’s make a concrete example: a node in FlowProxy has a upload bandwidth of 1
 Gbps, and an Azure link between East US and West Europe is around 85ms
@@ -868,7 +868,8 @@ the staging environment.
 From this preliminary result we can see a 50% reduction of CPU and thread usage,
 lowering total CPU usage of FlowProxy from ~10% to 5%. While this may seem like
 a minor improvement, freeing up CPU to be used by other critical services such
-as rbuilder can make the difference between winning and losing a relay auction.
+as rbuilder can make the difference between winning and losing a MEV-Boost
+auction.
 
 ## Next Steps
 
