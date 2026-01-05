@@ -61,16 +61,23 @@ export function GlobalMap({
           className="absolute bottom-2 left-2 z-10 rounded-md border border-fd-border bg-fd-card/90 px-3 py-2 text-xs shadow-md backdrop-blur-sm"
           style={{ fontFamily: 'var(--font-at-hauss-mono)' }}
         >
-          <div className="mb-1.5 font-medium text-fd-foreground">{metricLabel}</div>
+          <div className="mb-1.5 font-medium text-fd-foreground">
+            {metricLabel}
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-fd-muted-foreground">{formatMetric(metricKey as string, metricRange[0])}</span>
+            <span className="text-fd-muted-foreground">
+              {formatMetric(metricKey as string, metricRange[0])}
+            </span>
             <div
               className="h-2 w-24 rounded-sm"
               style={{
-                background: 'linear-gradient(to right, rgb(238, 184, 21), rgb(245, 158, 11), rgb(239, 68, 68))',
+                background:
+                  'linear-gradient(to right, rgb(238, 184, 21), rgb(245, 158, 11), rgb(239, 68, 68))',
               }}
             />
-            <span className="text-fd-muted-foreground">{formatMetric(metricKey as string, metricRange[1])}</span>
+            <span className="text-fd-muted-foreground">
+              {formatMetric(metricKey as string, metricRange[1])}
+            </span>
           </div>
         </div>
       )}
