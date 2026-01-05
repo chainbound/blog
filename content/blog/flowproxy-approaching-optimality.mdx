@@ -717,8 +717,8 @@ Below we can see a more complete before-after of latency between links. We can
 see that after HTTP/2 we see more bounded p99 and p999, while p50 and p90 stayed
 almost the same. While picking a single day from both deployments may not be
 completely indicative, the behaviour remained quite consistent during the next
-days. Latency comparison of P99 latencies befor, each with 24 hours worth of datae and after HTTP/2 for a day's worth of data (all
-numbers in milliseconds):
+days. Latency comparison of P99 latencies befor, each with 24 hours worth of
+datae and after HTTP/2 for a day's worth of data (all numbers in milliseconds):
 
 | src                  | dst                 | p50_a | p50_b | Δp50 | p99_a | p99_b | Δp99 |
 | -------------------- | ------------------- | ----- | ----- | ---- | ----- | ----- | ---- |
@@ -839,7 +839,8 @@ on your workload.
 
 After all these modifications, we were finally approaching optimality in terms
 of order propagation: variance for big and small messages, over long and short
-links was reduced significantly. Check out the full comparison of P99 latencies below, each with 24 hours worth of data:
+links was reduced significantly. Check out the full comparison of P99 latencies
+below, each with 24 hours worth of data:
 
 **Before**
 
@@ -997,9 +998,7 @@ links was reduced significantly. Check out the full comparison of P99 latencies 
   showLegend={true}
 />
 
-<small>
-  The maximum P99 here is ~1950ms.
-</small>
+<small>The maximum P99 here is ~1950ms.</small>
 
 **After**
 
@@ -1157,12 +1156,10 @@ links was reduced significantly. Check out the full comparison of P99 latencies 
   showLegend={true}
 />
 
-<small>
-  The maximum P99 here is ~50ms.
-</small>
+<small>The maximum P99 here is ~50ms.</small>
 
-There was one more change that we knew would be
-impactful, not on latency but on CPU usage.
+There was one more change that we knew would be impactful, not on latency but on
+CPU usage.
 
 ### mTLS
 
