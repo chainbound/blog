@@ -6,6 +6,7 @@ tags: [rust, networking, performance]
 ---
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { GlobalMap } from '@/components/diagrams/map';
 
 <img
   src="/flowproxy-approaching-optimality/logo.png"
@@ -21,9 +22,10 @@ In
 its [original orderflow proxy](https://github.com/flashbots/buildernet-orderflow-proxy) implementation
 in Go in favor of a new one built in Rust, created with the goal of reducing
 end-to-end latency, improving efficiency, and increasing observability in
-[BuilderNet](https://buildernet.org/)'s networking layer. This first collaboration aimed at bringing it to
-production-ready quality and ready for deployment, already observing good
-improvements in networking and processing latency.
+[BuilderNet](https://buildernet.org/)'s networking layer. This first
+collaboration aimed at bringing it to production-ready quality and ready for
+deployment, already observing good improvements in networking and processing
+latency.
 
 This second collaboration expanded on the _Next Steps_ section outlined in the
 previous report, with success. It includes a quantitative analysis of order
@@ -99,6 +101,174 @@ congestion:
 
   </Accordion>
 </Accordions>
+
+Or visualized:
+
+<GlobalMap
+  servers={[
+    {
+      id: 'beaver_eastus',
+      name: 'Beaver',
+      code: 'EUS',
+      coordinates: [-78.5, 38.9],
+    },
+    {
+      id: 'nethermind_eastus',
+      name: 'Nethermind',
+      code: 'EUS',
+      coordinates: [-76.5, 40.5],
+    },
+    {
+      id: 'flashbots_eastus',
+      name: 'Flashbots',
+      code: 'EUS',
+      coordinates: [-74.5, 39.7],
+    },
+    { id: 'beaver_we', name: 'Beaver', code: 'WE', coordinates: [4.9, 51.5] },
+    {
+      id: 'nethermind_we',
+      name: 'Nethermind',
+      code: 'WE',
+      coordinates: [6.9, 52.5],
+    },
+    {
+      id: 'flashbots_we',
+      name: 'Flashbots',
+      code: 'WE',
+      coordinates: [8.9, 50.5],
+    },
+  ]}
+  connections={[
+    // Transatlantic: Beaver EUS -> Europe (northern route)
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_we',
+      metrics: { bundleLoss: 21.92 },
+      waypoints: [
+        [-42, 47],
+        [-18, 49],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'flashbots_we',
+      metrics: { bundleLoss: 2.04 },
+      waypoints: [
+        [-40, 48],
+        [-15, 50],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'beaver_we',
+      metrics: { bundleLoss: 1.44 },
+      waypoints: [
+        [-42, 44],
+        [-18, 46],
+      ],
+    },
+    // US East local
+    {
+      from: 'beaver_eastus',
+      to: 'flashbots_eastus',
+      metrics: { bundleLoss: 0.0 },
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_eastus',
+      metrics: { bundleLoss: 0.0 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_eastus',
+      metrics: { bundleLoss: 0.03 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_eastus',
+      metrics: { bundleLoss: 0.03 },
+    },
+    // Transatlantic: Nethermind EUS -> Europe (middle routes)
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_we',
+      metrics: { bundleLoss: 0.02 },
+      waypoints: [
+        [-38, 46],
+        [-12, 48],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_we',
+      metrics: { bundleLoss: 0.02 },
+      waypoints: [
+        [-35, 43],
+        [-10, 45],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'nethermind_we',
+      metrics: { bundleLoss: 0.01 },
+      waypoints: [
+        [-32, 50],
+        [-8, 52],
+      ],
+    },
+    // Transatlantic: Flashbots EUS -> Europe (southern routes)
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_we',
+      metrics: { bundleLoss: 0.01 },
+      waypoints: [
+        [-30, 41],
+        [-5, 44],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'flashbots_we',
+      metrics: { bundleLoss: 0.01 },
+      waypoints: [
+        [-28, 44],
+        [-3, 47],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_we',
+      metrics: { bundleLoss: 0.01 },
+      waypoints: [
+        [-25, 47],
+        [0, 50],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_eastus',
+      metrics: { bundleLoss: 0.0 },
+    },
+    // European interconnections
+    { from: 'beaver_we', to: 'nethermind_we', metrics: { bundleLoss: 0.01 } },
+    { from: 'beaver_we', to: 'flashbots_we', metrics: { bundleLoss: 0.01 } },
+    {
+      from: 'nethermind_we',
+      to: 'flashbots_we',
+      metrics: { bundleLoss: 0.01 },
+    },
+  ]}
+  metricKey="bundleLoss"
+  metricRange={[0, 25]}
+  height={350}
+  center={[-35, 45]}
+  scale={350}
+/>
+
+<Callout type="info">
+  This map represents a simplified view of the BuilderNet topology, it's not
+  geographically accurate.
+</Callout>
 
 We can see in particular that inter-continental links are mostly affected by
 bundle loss, especially the instance `beaver_eastus_07` which receives the most
@@ -187,6 +357,161 @@ during high congestion.
   The negative p50 latencies here are due to [clock
   drift](https://en.wikipedia.org/wiki/Clock_drift).
 </Callout>
+
+Or, with P99 latencies visualized:
+
+<GlobalMap
+  servers={[
+    {
+      id: 'beaver_eastus',
+      name: 'Beaver',
+      code: 'EUS',
+      coordinates: [-78.5, 38.9],
+    },
+    {
+      id: 'nethermind_eastus',
+      name: 'Nethermind',
+      code: 'EUS',
+      coordinates: [-76.5, 40.5],
+    },
+    {
+      id: 'flashbots_eastus',
+      name: 'Flashbots',
+      code: 'EUS',
+      coordinates: [-74.5, 39.7],
+    },
+    { id: 'beaver_we', name: 'Beaver', code: 'WE', coordinates: [4.9, 51.5] },
+    {
+      id: 'nethermind_we',
+      name: 'Nethermind',
+      code: 'WE',
+      coordinates: [6.9, 52.5],
+    },
+    {
+      id: 'flashbots_we',
+      name: 'Flashbots',
+      code: 'WE',
+      coordinates: [8.9, 50.5],
+    },
+  ]}
+  connections={[
+    // Transatlantic: Beaver EUS -> Europe (high latency routes)
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 1947.05 },
+      waypoints: [
+        [-42, 47],
+        [-18, 49],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 1789.05 },
+      waypoints: [
+        [-40, 48],
+        [-15, 50],
+      ],
+    },
+    {
+      from: 'beaver_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 1521.6 },
+      waypoints: [
+        [-42, 44],
+        [-18, 46],
+      ],
+    },
+    // US East local
+    {
+      from: 'beaver_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 292.45 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_eastus',
+      metrics: { latency: 58.65 },
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 49.63 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_eastus',
+      metrics: { latency: 56.19 },
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_eastus',
+      metrics: { latency: 26.18 },
+    },
+    // Transatlantic: Nethermind EUS -> Europe
+    {
+      from: 'nethermind_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 194.66 },
+      waypoints: [
+        [-35, 43],
+        [-10, 45],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 193.11 },
+      waypoints: [
+        [-32, 50],
+        [-8, 52],
+      ],
+    },
+    {
+      from: 'nethermind_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 192.13 },
+      waypoints: [
+        [-38, 46],
+        [-12, 48],
+      ],
+    },
+    // Transatlantic: Flashbots EUS -> Europe
+    {
+      from: 'flashbots_eastus',
+      to: 'beaver_we',
+      metrics: { latency: 201.54 },
+      waypoints: [
+        [-30, 41],
+        [-5, 44],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'nethermind_we',
+      metrics: { latency: 200.27 },
+      waypoints: [
+        [-25, 47],
+        [0, 50],
+      ],
+    },
+    {
+      from: 'flashbots_eastus',
+      to: 'flashbots_we',
+      metrics: { latency: 199.81 },
+      waypoints: [
+        [-28, 44],
+        [-3, 47],
+      ],
+    },
+  ]}
+  metricKey="latency"
+  metricRange={[0, 2000]}
+  height={350}
+  center={[-35, 45]}
+  scale={350}
+/>
 
 As with the previous table, we can see the highest latency between the most
 active inter-region links, peaking at nearly 2s in p99. Another interesting

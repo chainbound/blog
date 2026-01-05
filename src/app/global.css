@@ -28,3 +28,25 @@ article small {
   color: var(--color-fd-muted-foreground);
   font-size: 0.875rem;
 }
+
+/* MapLibre styling for mapcn */
+.maplibregl-popup {
+  pointer-events: none !important;
+}
+
+.maplibregl-popup-content {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.maplibregl-popup-tip {
+  display: none !important;
+}
+
+/* Collapse attribution by default */
+.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show)
+  .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
