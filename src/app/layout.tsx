@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import localFont from 'next/font/local';
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
+import { baseUrl } from '@/lib/source';
 
 const atHaussMono = localFont({
   src: '../fonts/AtHaussMono-Regular.otf',
@@ -16,6 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: {
     default: 'Chainbound Blog',
     template: '%s | Chainbound Blog',
@@ -37,6 +39,18 @@ export const metadata: Metadata = {
       },
     ],
     apple: '/favicon.ico',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Chainbound Engineering Blog',
+    title: 'Chainbound Blog',
+    description: 'Technical blog by Chainbound',
+    url: baseUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Chainbound Blog',
+    description: 'Technical blog by Chainbound',
   },
 };
 

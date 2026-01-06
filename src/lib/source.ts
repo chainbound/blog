@@ -4,6 +4,8 @@ import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 import { icons } from 'lucide-react';
 import { createElement } from 'react';
 
+export const baseUrl = 'https://engineering.chainbound.io';
+
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const blog = loader({
   baseUrl: '/',

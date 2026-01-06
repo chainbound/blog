@@ -10,7 +10,7 @@ import {
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import { Calendar } from 'lucide-react';
-import { blog } from '@/lib/source';
+import { blog, baseUrl } from '@/lib/source';
 import { BackLink } from '@/components/back-link';
 import { getAuthor } from '@/lib/authors';
 import type { ComponentProps } from 'react';
@@ -139,8 +139,34 @@ export async function generateMetadata(props: {
   const params = await props.params;
   const page = blog.getPage([params.slug]);
   if (!page) notFound();
+
+  const url = `${baseUrl}/${params.slug}`;
+  const authorNames = page.data.authors.map((id) => getAuthor(id).name);
+  const cardImage = page.data.card ? `${baseUrl}${page.data.card}` : undefined;
+
   return {
     title: page.data.title,
     description: page.data.description,
+    authors: authorNames.map((name) => ({ name })),
+    openGraph: {
+      title: page.data.title,
+      description: page.data.description,
+      type: 'article',
+      url,
+      siteName: 'Chainbound Engineering Blog',
+      publishedTime: new Date(page.data.date).toISOString(),
+      authors: authorNames,
+      tags: page.data.tags,
+      ...(cardImage && { images: [cardImage] }),
+    },
+    twitter: {
+      card: cardImage ? 'summary_large_image' : 'summary',
+      title: page.data.title,
+      description: page.data.description,
+      ...(cardImage && { images: [cardImage] }),
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }

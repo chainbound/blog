@@ -31,6 +31,7 @@ export const posts = defineCollections({
     authors: z.array(z.string()),
     date: z.iso.date().or(z.date()),
     tags: z.array(z.string()).optional(),
+    card: z.string().optional(),
   }),
   postprocess: {
     includeProcessedMarkdown: true,
