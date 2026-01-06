@@ -22,6 +22,11 @@ const config = {
         destination: '/peerdas-propagation',
         permanent: true,
       },
+      {
+        source: '/payflow-an-exploration-of-agentic-commerce',
+        destination: 'payflow',
+        permanent: true
+      }
     ];
   },
 };
