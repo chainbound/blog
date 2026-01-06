@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { baseUrl } from '@/lib/source';
 import Script from 'next/script';
+import 'katex/dist/katex.css';
 
 const atHaussMono = localFont({
   src: '../fonts/AtHaussMono-Regular.otf',

@@ -24,9 +24,15 @@ const config = {
       },
       {
         source: '/payflow-an-exploration-of-agentic-commerce',
-        destination: 'payflow',
-        permanent: true
-      }
+        destination: '/payflow',
+        permanent: true,
+      },
+      {
+        source:
+          '/exploring-verifiable-continuous-sequencing-with-delay-functions',
+        destination: '/verifiable-continuous-sequencing-with-delay-functions',
+        permanent: true,
+      },
     ];
   },
 };

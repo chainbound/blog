@@ -6,19 +6,28 @@ tags: [layer2]
 hidden: true
 ---
 
-Today, we are launching Taikoscope, a monitoring and analytics platform for Taiko Alethia, the first based rollup built on Ethereum.
+Today, we are launching Taikoscope, a monitoring and analytics platform for
+Taiko Alethia, the first based rollup built on Ethereum.
 
 ## Why Taikoscope?
 
-Sequencers are currently whitelisted, and Taiko can only partially trust the operators to meet network standards, so independent monitoring is essential. Without visibility, users, the sequencer teams, or Taiko cannot verify performance, diagnose incidents, or quantify economic risk. Taikoscope is a unified dashboard that turns L1 and L2 data into objective alerts and signals across network resilience, security, and value flows in the Taiko ecosystem.
+Sequencers are currently whitelisted, and Taiko can only partially trust the
+operators to meet network standards, so independent monitoring is essential.
+Without visibility, users, the sequencer teams, or Taiko cannot verify
+performance, diagnose incidents, or quantify economic risk. Taikoscope is a
+unified dashboard that turns L1 and L2 data into objective alerts and signals
+across network resilience, security, and value flows in the Taiko ecosystem.
 
-Taikoscope gathers live data from Ethereum and Taiko. This data is processed, aggregated, and presented in intuitive dashboards. With Taikoscope, users can:
+Taikoscope gathers live data from Ethereum and Taiko. This data is processed,
+aggregated, and presented in intuitive dashboards. With Taikoscope, users can:
 
 - Monitor network uptime
 - Compare sequencer performance
 - Analyze sequencers economics
 
-Taikoscope is part of our work on based rollups with two goals: improving observability and analytics, and enhancing usability through better UX and expanded features.
+Taikoscope is part of our work on based rollups with two goals: improving
+observability and analytics, and enhancing usability through better UX and
+expanded features.
 
 ## What Does Taikoscope Track?
 
@@ -26,7 +35,9 @@ Taikoscope is part of our work on based rollups with two goals: improving observ
 
 ![Uptime status](/launching-taikoscope/status.png)
 
-Uptime monitoring tracks critical operational metrics to ensure the network remains responsive and reliable. Incidents are created when metrics breach thresholds and shown at [status.taiko.xyz](http://status.taiko.xyz/) 
+Uptime monitoring tracks critical operational metrics to ensure the network
+remains responsive and reliable. Incidents are created when metrics breach
+thresholds and shown at [status.taiko.xyz](http://status.taiko.xyz/)
 
 **Key Metrics:**
 
@@ -36,28 +47,35 @@ Uptime monitoring tracks critical operational metrics to ensure the network rema
 - **Proof verification:** Proofs are verified
 - **Public API uptime:** Availability of the official public RPC
 
-**Why It Matters:** Monitoring uptime metrics ensures network reliability, enables rapid incident response, and maintains community trust through transparent, measurable performance.
+**Why It Matters:** Monitoring uptime metrics ensures network reliability,
+enables rapid incident response, and maintains community trust through
+transparent, measurable performance.
 
 ### Sequencer Economics
 
 ![Sequencer economics](/launching-taikoscope/economics.png)
 
-Economic metrics analyze revenue and costs for batch submissions and sequencer operations.
+Economic metrics analyze revenue and costs for batch submissions and sequencer
+operations.
 
 **Key Metrics:**
 
 - **Revenue from base and priority fee:** Income from user transactions on Taiko
 - **L1 posting costs:** Expenses incurred when posting data to Ethereum
 - **Network net profit/loss:** Economic viability of sequencers
-- **Sequencer profit ranking:** Detailed information and comparison of sequencer profits
+- **Sequencer profit ranking:** Detailed information and comparison of sequencer
+  profits
 
-**Why it matters:** Monitoring sequencer economics informs strategic decision-making, helps maintain profitability, and ensures long-term sustainability.
+**Why it matters:** Monitoring sequencer economics informs strategic
+decision-making, helps maintain profitability, and ensures long-term
+sustainability.
 
 ### Sequencer Performance
 
 ![Sequencer performance](/launching-taikoscope/performance.png)
 
-Performance metrics offer detailed, comparative insights into the efficiency and reliability of sequencers across the network.
+Performance metrics offer detailed, comparative insights into the efficiency and
+reliability of sequencers across the network.
 
 **Key Metrics:**
 
@@ -65,9 +83,11 @@ Performance metrics offer detailed, comparative insights into the efficiency and
 - **L2 block cadence:** How often Taiko blocks are created
 - **Batch posting cadence:** How often batches of L2 blocks are posted to L1
 - **Gas usage:** Efficiency in gas consumption per transaction/block
-- **Tx count per L2 block:** How many transactions are included in each Taiko block
+- **Tx count per L2 block:** How many transactions are included in each Taiko
+  block
 
-**Why It Matters:** Analyzing sequencer performance helps identify bottlenecks, optimize sequencer usage, and incentivize improved network efficiency.
+**Why It Matters:** Analyzing sequencer performance helps identify bottlenecks,
+optimize sequencer usage, and incentivize improved network efficiency.
 
 ### Network Health
 
@@ -78,26 +98,34 @@ Performance metrics offer detailed, comparative insights into the efficiency and
 - **Prove time:** Time it takes to prove batches posted on L1
 - **Verify time:** Time it takes to verify batches posted on L1
 - **L2 reorg frequency and depth:** Stability and consistency of blockchain data
-- **Failed proposals:** If a sequencer creates an L2 block but is unable to include it in a batch and another sequencer has to pick up the work
+- **Failed proposals:** If a sequencer creates an L2 block but is unable to
+  include it in a batch and another sequencer has to pick up the work
 - **Slashing events:** If a sequencer fails to honor their commitments
 - **Forced inclusions:** Transactions that have been forced directly on L1
 
-**Why It Matters:** Monitoring network health is essential for maintaining stability and community confidence. Tracking these metrics helps quickly detect and mitigate issues, ensuring robust and trustworthy infrastructure.
+**Why It Matters:** Monitoring network health is essential for maintaining
+stability and community confidence. Tracking these metrics helps quickly detect
+and mitigate issues, ensuring robust and trustworthy infrastructure.
 
 ## Architecture
 
 <img
-    src="/launching-taikoscope/architecture.png"
-    alt="Architecture"
-    style={{ maxWidth: '500px', margin: '0 auto', display: 'block' }}
-  />
+  src="/launching-taikoscope/architecture.png"
+  alt="Architecture"
+  style={{ maxWidth: '500px', margin: '0 auto', display: 'block' }}
+/>
 
-Taikoscope subscribes to events from both L1 and L2 RPCs, and on each L1 head, and performs the needed contract calls. Data is inserted into ClickHouse and queried from the Dashboard via an API.
+Taikoscope subscribes to events from both L1 and L2 RPCs, and on each L1 head,
+and performs the needed contract calls. Data is inserted into ClickHouse and
+queried from the Dashboard via an API.
 
-Taikoscope is developed entirely in Rust, aligning with Chainbound’s performance-oriented engineering ethos.
+Taikoscope is developed entirely in Rust, aligning with Chainbound’s
+performance-oriented engineering ethos.
 
 🔗 **Dashboard**: [taikoscope.xyz](https://taikoscope.xyz/)
 
-🧑‍💻 **Code**: [github.com/chainbound/taikoscope](https://github.com/chainbound/taikoscope)
+🧑‍💻 **Code**:
+[github.com/chainbound/taikoscope](https://github.com/chainbound/taikoscope)
 
-Taikoscope is funded through Taiko’s grant program and MIT licensed. Contributions are welcome!
+Taikoscope is funded through Taiko’s grant program and MIT licensed.
+Contributions are welcome!

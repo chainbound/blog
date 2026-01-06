@@ -7,6 +7,8 @@ import {
   metaSchema,
 } from 'fumadocs-mdx/config';
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
+import rehypeKatex from 'rehype-katex';
+import remarkMath from 'remark-math';
 import { z } from 'zod';
 
 // You can customise Zod schemas for frontmatter and `meta.json` here
@@ -44,6 +46,8 @@ export default defineConfig({
   plugins: [lastModified()],
   mdxOptions: {
     // MDX options
-    remarkPlugins: [remarkMdxMermaid],
+    remarkPlugins: [remarkMdxMermaid, remarkMath],
+    // Place it at first, it should be executed before the syntax highlighter
+    rehypePlugins: (v) => [rehypeKatex, ...v],
   },
 });
