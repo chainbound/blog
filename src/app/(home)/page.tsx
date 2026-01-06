@@ -7,9 +7,12 @@ import { Calendar } from 'lucide-react';
 const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 export default function HomePage() {
-  const posts = [...blog.getPages()].sort(
-    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
-  );
+  const posts = [...blog.getPages()]
+    .filter((post) => !post.data.hidden)
+    .sort(
+      (a, b) =>
+        new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
+    );
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-12">

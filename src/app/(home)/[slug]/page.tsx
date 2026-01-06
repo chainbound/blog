@@ -13,6 +13,7 @@ import { Calendar } from 'lucide-react';
 import { blog, baseUrl } from '@/lib/source';
 import { BackLink } from '@/components/back-link';
 import { getAuthor } from '@/lib/authors';
+import { Mermaid } from '@/components/mdx/mermaid';
 import type { ComponentProps } from 'react';
 
 const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
@@ -39,6 +40,7 @@ const mdxComponents = {
   h3: createStyledHeading(defaultMdxComponents.h3, 'text-xl'),
   h4: createStyledHeading(defaultMdxComponents.h4, 'text-lg'),
   img: (props: ComponentProps<'img'>) => <ImageZoom {...(props as any)} />,
+  Mermaid,
 };
 
 export default async function Page(props: {

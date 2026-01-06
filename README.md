@@ -33,6 +33,10 @@ title: 'Some Title'
 authors: [author1, author2]
 date: YYYY-MM-DD
 tags: [tag1, tag2]
+# Metadata image, relative to public/
+card: /path/to/image.png
+# Display on home page or not
+hidden: false
 ```
 
 ### Authors

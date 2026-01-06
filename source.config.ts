@@ -1,3 +1,4 @@
+import { remarkMdxMermaid } from 'fumadocs-core/mdx-plugins';
 import {
   defineCollections,
   defineConfig,
@@ -32,6 +33,7 @@ export const posts = defineCollections({
     date: z.iso.date().or(z.date()),
     tags: z.array(z.string()).optional(),
     card: z.string().optional(),
+    hidden: z.boolean().optional(),
   }),
   postprocess: {
     includeProcessedMarkdown: true,
@@ -42,5 +44,6 @@ export default defineConfig({
   plugins: [lastModified()],
   mdxOptions: {
     // MDX options
+    remarkPlugins: [remarkMdxMermaid],
   },
 });
