@@ -5,6 +5,7 @@ import localFont from 'next/font/local';
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { baseUrl } from '@/lib/source';
+import Script from 'next/script';
 
 const atHaussMono = localFont({
   src: '../fonts/AtHaussMono-Regular.otf',
@@ -61,6 +62,13 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       className={`${inter.className} ${atHaussMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <Script
+          defer
+          src="https://umami.chainbound.io/script.js"
+          data-website-id="5deffa44-be5a-4605-9de5-1b09d1cea940"
+        />
+      </head>
       <body className="flex flex-col min-h-screen">
         <RootProvider theme={{ defaultTheme: 'light' }}>
           {children}
