@@ -1,0 +1,415 @@
+---
+title: 'Estimating Validator Decentralization Using P2P Data'
+authors: [mempirate]
+date: 2024-06-24
+tags: [ethereum, p2p]
+hidden: false
+---
+
+This research was funded by the Robust Incentives Group at the Ethereum
+Foundation. This work is specifically related to ROP-8. Additional information
+can be found
+[here](https://www.notion.so/bad7233658cc41f38b26e7b4f6cf6e8b?pvs=21).
+
+We want to thank [soispoke](https://x.com/soispoke), the
+[EF DevOps team](https://x.com/EthPandaOps), [MigaLabs](https://migalabs.io/)
+and [ProbeLab](https://probelab.io/) for their advice and contributions!
+
+## Introduction
+
+The geographical distribution of a validator set is
+[one of the most critical factors](https://collective.flashbots.net/t/decentralized-crypto-needs-you-to-be-a-geographical-decentralization-maxi/1385)
+in determining a blockchain's level of decentralization. Validator
+decentralization is vital for Ethereum. It enhances network security,
+resilience, and censorship resistance by distributing control and minimizing the
+risk of single points of failure or malicious attacks.
+
+It is well known that Ethereum has a
+[very large](https://beaconcha.in/charts/validators) validator set, but **is
+this validator set geographically distributed?** Ethereum has a substantial
+amount of beacon nodes running on the consensus layer network, with current
+estimates at around ~12,000 active nodes ([source](https://nodewatch.io/)). A
+beacon node serves as a _potential_ entrypoint into the network for validators,
+but it is not representative of the actual validator distribution.
+
+![](/validator-decentralization/meme.png)
+
+<small>Probably not.</small>
+
+## Anatomy of a validator
+
+An Ethereum validator is a virtual entity that consists of a balance, public key
+and other properties on the beacon chain. They are roughly responsible for 4
+things:
+
+1. Proposing new blocks
+2. Voting on other block proposals (attesting)
+3. Aggregating attestations
+4. Slashing other validators in case they commit faults
+
+A _validator client_ is the piece of software that executes these
+responsibilities for each of its registered validator keys (which can be many).
+But a validator client on its own cannot connect to the P2P beacon network to
+talk directly to other validators. Instead, it connects to an entity known as a
+_beacon node_, which is a standalone client that maintains the beacon chain and
+communicates with other beacon nodes.
+
+![](/validator-decentralization/node-schematic.png)
+
+<small>Schematic of validator clients and a beacon node.</small>
+
+Beacon nodes can have a number of validators attached to them that ranges from
+zero to thousands. In fact,
+[it’s been reported](https://medium.com/@grandine/grandine-0-4-1-released-fb98daef6d60)
+that in some Ethereum testnets client developers have been running upwards of
+50k validators on a single machine. This separation of concerns makes our
+investigation somewhat harder: a simple crawl of the P2P network might give us a
+good overview of the set of online beacon nodes in real time, but this is not
+representative of the overall validator client distribution at all.
+
+Before we address this problem, we’ll take a closer look at validator duties and
+their footprint on the network.
+
+## Attestation duties and committees
+
+As mentioned above, one of the main responsibilities of a validator is voting on
+blocks by broadcasting _attestations_. These attestations express the view of a
+validator about which chain they think is correct. In more detail, they actually
+cast 2 different votes: one to express their view of the current head block, and
+one to help finalize past blocks. This is because Ethereum’s consensus is a
+combination of [2 subprotocols](https://arxiv.org/pdf/2003.03052): LMD Ghost, a
+fork-choice rule, and a finality gadget called Casper FFG.
+
+These duties are assigned randomly every epoch (with some
+[lookahead](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/validator.md#lookahead))
+with RANDAO as the source of randomness. Validators get assigned to one slot per
+epoch at which they have to cast their attestation, which is just a message with
+the votes that is signed over with the validator BLS private key. These votes
+are then to be packed and stored in the next beacon block. However, if
+[all 1 million validators](https://beaconcha.in/charts/validators) were to
+attest for every block, the network would be flooded with messages, and the
+proposer that is supposed to pack these attestations into their block would have
+trouble verifying all of those signatures in time. This would make Ethereum’s
+design goal of low resource validation unfeasible.
+
+To address these issues, the beacon network is subdivided into _committees_,
+which are subsets of the active validator set that distribute the overall
+workload. Committees have a minimum size of $$128$$ validators, and there are
+$$64$$ committees that are assigned per slot. But how is this achieved in
+practice? What network primitives do we require to enable such a logical
+separation?
+
+## Attestation subnets
+
+The Ethereum consensus P2P network is built with
+[GossipSub](https://github.com/libp2p/specs/tree/master/pubsub/gossipsub), a
+scalable pubsub protocol running on libp2p. Being a pubsub protocol, GossipSub
+supports publish/subscribe patterns and the segmentation of networks into
+logical components called _topics_ (aka P2P overlays)_._ These are the
+networking primitives that underpin beacon committees.
+
+One example of a topic is the
+[`beacon_block`](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#beacon_block)
+topic, which is a _global topic_ on which new beacon blocks are broadcast. Every
+validator must subscribe to this topic in order to update their local view of
+the chain and perform their duties.
+
+The attestation overlays look quite a bit different. For each committee, we
+derive a subnet ID based on the committee index (0-64). The topic for the
+respective subnets then becomes
+[`beacon_attestation_{subnet_id}`](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#beacon_attestation_subnet_id).
+Every validator knows their upcoming attestation duties at least 1 epoch ahead
+of time and can join the correct subnet in advance. When they have to make an
+attestation, they broadcast it on this subnet.
+
+As mentioned before, these attestations are eventually supposed to make it into
+a beacon block. But since upcoming proposers might not be subscribed to these
+subnets, how does that work? This is where _attestation aggregators_ come in.
+These are a subset of the beacon committees that are responsible for
+_aggregating_ all of the attestations they see and broadcasting the aggregate
+attestations on the global
+[`beacon_aggregate_and_proof`](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#beacon_attestation_subnet_id)
+topic. This topic is again a mandatory global topic that all validators will be
+subscribed to, thus providing a way for local unaggregated attestations to make
+it into the global view of the network. Per committee, there’s a target number
+of aggregators of $$16$$.
+
+### Subnet types
+
+These attestation subnets described above are ephemeral and directly tied to the
+validator duties. We call these **short-lived** attestation subnets. The problem
+with these ephemeral subnets is that they are not very robust, and could result
+in lost messages. To deal with this issue, the notion of a
+“[subnet backbone](https://github.com/ethereum/consensus-specs/issues/2749)” was
+introduced.
+
+This backbone consists of **long-lived**, persistent subnet subscriptions that
+are not tied to validator duties but rather a
+[deterministic function](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#attestation-subnet-subscription)
+of the beacon node’s unique ID and the current epoch. These long-lived subnets
+are maintained for $256$ epochs, or around 27 hours, and each beacon node has to
+subscribe to 2 of them. They are also advertised on the discovery layer, making
+it easier for beacon nodes with certain duties to find peers on the relevant
+subnets.
+
+## Validator footprints
+
+Returning to the separation of the beacon node and validator clients, there’s
+now a clear footprint that validators leave on the beacon node’s network
+identity: their short-lived subnet subscriptions. This will be the core of our
+methodology.
+
+## Methodology
+
+Generally, the beacon network consists of 3 domains:
+
+- The discovery domain
+- The Req/Resp domain
+- The gossip domain
+
+Each of these domains provides some information about a beacon node.
+
+### Long-lived subnets & node metadata
+
+At the **discovery layer**
+([discv5](https://github.com/ethereum/devp2p/blob/master/discv5/discv5.md)), a
+beacon node’s identity consists of an
+[ENR](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#enr-structure)
+with some additional metadata. This metadata can roughly be represented as the
+following object:
+
+```js
+{
+  (peer_id,
+    ip,
+    tcp_port,
+    udp_port,
+    attnets,
+    fork_digest,
+    next_fork_version,
+    next_fork_epoch);
+}
+```
+
+This metadata helps other peers connect to peers that are relevant to them,
+indeed, one of the extra metadata fields are the (long-lived) attestation
+subnets that this node is subscribed to!
+
+The **Req/Resp domain** is where the actual handshake happens. This is where
+nodes exchange `Status` messages that look like the following in order to
+establish a connection:
+
+```js
+(
+  fork_digest: ForkDigest
+  finalized_root: Root
+  finalized_epoch: Epoch
+  head_root: Root
+  head_slot: Slot
+)
+```
+
+The underlying protocol used for the Req/Resp domain is (again) libp2p. On the
+lower levels, additional information like `client_version` is also exchanged
+when connections are set up.
+
+It is at this level that peers can also exchange `MetaData` objects to identify
+each other’s most up to date long-lived subnet subscriptions. The
+[`MetaData`](https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md#metadata)
+object looks like this:
+
+```js
+(
+  seq_number: uint64
+  attnets: Bitvector[ATTESTATION_SUBNET_COUNT]
+  ...
+)
+```
+
+### Short-lived subnets
+
+So far, we’ve only seen how nodes exchange metadata and their long-lived subnet
+subscriptions, which tell us nothing about potential validators. For that, we
+need the short-lived subnets, which we can only collect on the gossip domain.
+Our initial strategy was doing just that:
+
+1. Listen to incoming topic subscription requests
+2. Save and index them
+
+However, on an initial review of the data, we saw way too many beacon nodes that
+didn’t subscribe to any additional subnets besides their long-lived, mandatory
+subscriptions.
+
+Our assumption was that in order to publish data on a gossipsub topic, one
+needed to be subscribed to it. It turns out that this is not the case, and many
+clients have different behaviour to minimize bandwidth and CPU usage. Rather
+than subscribing to the subnet directly, the peer finds other peers that are
+subscribed to the required subnet beforehand and shares the attestation with
+them. The subscribed peers make sure to verify and forward these attestations.
+Remember that in theory, only attestation aggregators need to be listening to
+all incoming attestations in order to do their jobs. This is exactly what was
+happening, and explains why we had so little short-lived subnet observations.
+
+With this understanding, we could now tune our assumptions:
+
+- For each subnet, there’s a target of `TARGET_AGGREGATORS_PER_COMMITTEE=16`
+  aggregators per committee
+- This means that on average, there will only be $$16$$ validators per committee
+  that will be subscribed to an additional short-lived subnet for the duration
+  of an epoch
+- This results in a maximum of $$16 * 32 * 64 = 32768$$ useful observations per
+  epoch
+
+With these assumptions in mind, we can start estimating validator counts.
+
+### Estimating validator counts
+
+For each observation, we subtract the number of long-lived subnets $$S_l$$ from
+all subscribed subnets $$S_{all}$$ to arrive at the number of short-lived
+subnets $$S_s$$:
+
+```math
+S_s = S_{all} - S_l
+```
+
+Since we know aggregators are subscribed to one additional subnet per epoch,
+$S_s$ will result in an estimated validator count for a certain beacon node in
+this epoch. Note that just one observation will not be enough to get an accurate
+estimate, because of the following reasons:
+
+- It could be that a validator is not an aggregator for this epoch, and thus
+  won’t subscribe to any subnets
+- There could be overlap between the long-lived and short-lived subnets
+
+Due to this reason, we continuously try to collect observations for each known
+beacon node per epoch, and save the maximum estimated validator counts. Note
+also that the ceiling for validator estimations is at $64 - 2$, because that’s
+the maximum amount of short-lived subnets we can record. This is important! It
+means that for beacon nodes with more than $62$ validators, we can not estimate
+how many there are, and just record the ceiling. We want to highlight again that
+this is just an estimation and won’t be a very accurate representation of the
+total number of validators.
+
+## Architecture
+
+In this section we’ll dive a bit deeper into the architecture. All the code for
+this is open source and can be found in this repository:
+[https://github.com/chainbound/valtrack](https://github.com/chainbound/valtrack).
+A lot of the crawler code is based on projects like
+[Hermes](https://github.com/probe-lab/hermes) and
+[Armiarma](https://github.com/migalabs/armiarma/). An overview can be seen here:
+
+![](/validator-decentralization/architecture.png)
+
+### Crawler
+
+The crawler is the core component of the system. It will crawl the discv5
+discovery DHT, find nodes that are on the correct network by looking at the
+metadata in their ENRs, and then try to connect with them. It will keep a local
+cache of known peers and try to reconnect every epoch to get updated
+observations.
+
+We outline 2 types of events (observations): `PeerDiscoveryEvent` and
+`MetadataReceivedEvent`. The second one is most relevant and contains the
+following fields:
+
+```go
+type MetadataReceivedEvent struct {
+	ENR               string          `json:"enr"`
+	ID                string          `json:"id"`
+	Multiaddr         string          `json:"multiaddr"`
+	Epoch             int             `json:"epoch"`
+	MetaData          *eth.MetaDataV1 `json:"metadata"`
+	SubscribedSubnets []int64         `json:"subscribed_subnets"`
+	ClientVersion     string          `json:"client_version"`
+	CrawlerID         string          `json:"crawler_id"`
+	CrawlerLoc        string          `json:"crawler_location"`
+	Timestamp         int64           `json:"timestamp"` // Timestamp in UNIX milliseconds
+}
+```
+
+Along with some metadata, this contains all of the fields required to apply the
+previously described methodology: `SubscribedSubnets` contains the actually
+subscribed subnets, obtained by listening on the GossipSub domain, and
+`MetaData` contains the peer’s long-lived subnets.
+
+All of these events are then sent to a persistent message queue, where they are
+stored until they’re read by the consumer.
+
+### Consumer
+
+The consumer turns the event logs into a stateful view of the network by
+implementing the methodology described above. It parses the short-lived subnets
+from the metadata events to get the estimated validator counts, and updates any
+existing entries in its stateful view. This stateful view is saved in a local
+sqlite database, which we expose over an API. The table schema roughly looks
+like this:
+
+```sql
+validator_tracker (
+	peer_id TEXT PRIMARY KEY,
+	enr TEXT,
+	multiaddr TEXT,
+	ip TEXT,
+	port INTEGER,
+	last_seen INTEGER,
+	last_epoch INTEGER,
+	client_version TEXT,
+	possible_validator BOOLEAN,
+	max_validator_count INTEGER,
+	num_observations INTEGER,
+	hostname TEXT,
+	city TEXT,
+	region TEXT,
+	country TEXT,
+	latitude REAL,
+	longitude REAL,
+	postal_code TEXT,
+	asn TEXT,
+	asn_organization TEXT,
+	asn_type TEXT
+)
+```
+
+We then join this data together with an IP location dataset to provide more
+information about geographical distribution.
+
+## Results
+
+[Chainbound](https://www.chainbound.io/) runs a
+https://github.com/chainbound/valtrack deployment that pushes all data to Dune
+every 24 hours.
+
+<aside>
+💡 Dune table link: https://dune.com/chainbound/geolocating-validators
+
+</aside>
+
+_This data has been stripped of sensitive information such as IP addresses and
+exact coordinates. However, it retains information like city, coordinates with a
+precision of a 10km radius, and ASN information._
+
+**An example dashboard leveraging this information can be seen
+[here](https://chainbound.grafana.net/d/fdry7answ53b4a/ulisse-v2?orgId=1&from=now-6h&to=now&timezone=browser)**.
+
+![](/validator-decentralization/map.png)
+
+## Limitations
+
+- The maximum number of validators we can estimate with this methodology per
+  beacon node is 62, due to that being the maximum amount of short-lived subnet
+  subscriptions. This will result in a significantly underreported total number
+  of validators, but should still be able to provide a reasonable estimation of
+  the geographical distribution.
+- We failed to gather any meaningful data on Teku nodes over the 30-day period,
+  which could signify an error in our P2P implementation and impact the results.
+- These results will be skewed towards validators attached to beacon nodes that
+  have opened P2P networking ports in their firewall, which will mostly be
+  beacon nodes running on cloud providers. The reason for this is that our
+  crawler can more easily connect to nodes that have exposed ports.
+
+## References
+
+- https://eth2book.info/capella/
+- https://hackmd.io/@dmarz/ethereum_overlays
+- https://github.com/ethereum/consensus-specs/tree/dev
