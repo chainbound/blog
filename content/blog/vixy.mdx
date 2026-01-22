@@ -63,7 +63,19 @@ This mirrors how we usually write internal design docs: start with the big pictu
 then fill in details. The diagram gave us a quick way to validate the overall approach and fix 
 mistakes early, before the agent committed to a direction.
 
-![Architecture Diagram](/vixy/architecture.png)
+```mermaid
+flowchart TD
+    A["TOML Config\n(nodes, settings)"]
+
+    A --> B["EL Health Monitor\neth_getBlockNumber\ntrack chain head"]
+    A --> C["CL Health Monitor\n/node/health + /beacon/headers/head"]
+
+    B --> D["EL Node Pool\nhealthy/lagging"]
+    C --> E["CL Node Pool\nhealthy/lagging"]
+
+    D --> F["Proxy Server\nEL HTTP: /el/*\nEL WS: /el/ws\nCL HTTP: /cl/*"]
+    E --> F
+```
 
 Once the architecture made sense, we asked Claude to explain the system end to end and 
 break the work into phases. It produced a clear plan covering project setup, configuration, 
