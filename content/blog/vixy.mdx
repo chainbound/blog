@@ -65,16 +65,13 @@ mistakes early, before the agent committed to a direction.
 
 ```mermaid
 flowchart TD
-    A["TOML Config\n(nodes, settings)"]
-
-    A --> B["EL Health Monitor\neth_getBlockNumber\ntrack chain head"]
-    A --> C["CL Health Monitor\n/node/health + /beacon/headers/head"]
-
-    B --> D["EL Node Pool\nhealthy/lagging"]
-    C --> E["CL Node Pool\nhealthy/lagging"]
-
-    D --> F["Proxy Server\nEL HTTP: /el/*\nEL WS: /el/ws\nCL HTTP: /cl/*"]
-    E --> F
+    Config["<b>TOML Config</b><br/><i><small>nodes, settings</small></i>"]
+    Config --> ELHM["<b>EL Health Monitor</b><br/><i><small>eth_getBlockNumber<br/>track chain head</small></i>"]
+    Config --> CLHM["<b>CL Health Monitor</b><br/><i><small>/node/health +<br/>track chain head</small></i>"]
+    ELHM --> ELNP["<b>EL Node Pool</b><br/><i><small>healthy/lagging</small></i>"]
+    CLHM --> CLNP["<b>CL Node Pool</b><br/><i><small>healthy/lagging</small></i>"]
+    ELNP --> Proxy["<b>Proxy Server</b><br/><i><small>EL HTTP: /el/*<br/>EL WS: /el/ws<br/>CL HTTP: /cl/*</small></i>"]
+    CLNP --> Proxy
 ```
 
 Once the architecture made sense, we asked Claude to explain the system end to end and 
