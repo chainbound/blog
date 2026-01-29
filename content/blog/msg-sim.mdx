@@ -283,37 +283,37 @@ namespaces:
 
 ```mermaid
 flowchart TB
-    subgraph hub["Hub Namespace"]
-        bridge["Bridge Device\nmsg-sim-br0"]
-        veth1["hub-veth-1"]
-        veth2["hub-veth-2"]
-        veth3["hub-veth-3"]
+    subgraph hub[Hub Namespace]
+        bridge[msg-sim-br0]
+        veth1[hub-veth-1]
+        veth2[hub-veth-2]
+        veth3[hub-veth-3]
         bridge --- veth1
         bridge --- veth2
         bridge --- veth3
     end
 
-    subgraph peer1["Peer 1 Namespace"]
-        ip1["10.0.0.1"]
-        tc1["tc: DRR → TBF → netem\n(per-destination rules)"]
+    subgraph peer1[Peer 1 Namespace]
+        ip1[10.0.0.1]
+        tc1[tc: DRR → TBF → netem]
         ip1 --- tc1
     end
 
-    subgraph peer2["Peer 2 Namespace"]
-        ip2["10.0.0.2"]
-        tc2["tc: DRR → TBF → netem\n(per-destination rules)"]
+    subgraph peer2[Peer 2 Namespace]
+        ip2[10.0.0.2]
+        tc2[tc: DRR → TBF → netem]
         ip2 --- tc2
     end
 
-    subgraph peer3["Peer 3 Namespace"]
-        ip3["10.0.0.3"]
-        tc3["tc: DRR → TBF → netem\n(per-destination rules)"]
+    subgraph peer3[Peer 3 Namespace]
+        ip3[10.0.0.3]
+        tc3[tc: DRR → TBF → netem]
         ip3 --- tc3
     end
 
-    veth1 <-."veth pair".-> tc1
-    veth2 <-."veth pair".-> tc2
-    veth3 <-."veth pair".-> tc3
+    veth1 <-.->|veth pair| tc1
+    veth2 <-.->|veth pair| tc2
+    veth3 <-.->|veth pair| tc3
 
 ```
 

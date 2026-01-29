@@ -40,6 +40,30 @@ const mdxComponents = {
   h3: createStyledHeading(defaultMdxComponents.h3, 'text-xl'),
   h4: createStyledHeading(defaultMdxComponents.h4, 'text-lg'),
   img: (props: ComponentProps<'img'>) => <ImageZoom {...(props as any)} />,
+  pre: ({ children, ...props }: ComponentProps<'pre'>) => {
+    // Check if this is a code block with proper structure
+    if (
+      children &&
+      typeof children === 'object' &&
+      'props' in children &&
+      children.props &&
+      typeof children.props === 'object' &&
+      'className' in children.props &&
+      typeof children.props.className === 'string' &&
+      children.props.className.includes('language-mermaid')
+    ) {
+      // Extract the code content
+      const code =
+        'children' in children.props &&
+        typeof children.props.children === 'string'
+          ? children.props.children
+          : '';
+      return <Mermaid chart={code.trim()} />;
+    }
+
+    // Default pre rendering for non-mermaid code blocks
+    return <defaultMdxComponents.pre {...props}>{children}</defaultMdxComponents.pre>;
+  },
   Mermaid,
 };
 
