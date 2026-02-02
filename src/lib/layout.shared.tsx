@@ -1,5 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
+import { Rss } from 'lucide-react';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -24,6 +25,15 @@ export function baseOptions(): BaseLayoutProps {
         </>
       ),
     },
+    links: [
+      {
+        type: 'icon',
+        text: 'RSS Feed',
+        label: 'RSS Feed',
+        icon: <Rss className="size-5" />,
+        url: '/rss.xml',
+      },
+    ],
     githubUrl: 'https://github.com/chainbound',
   };
 }
