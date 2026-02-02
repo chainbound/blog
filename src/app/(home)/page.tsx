@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { blog } from '@/lib/source';
 import { getAuthor } from '@/lib/authors';
 import { Calendar } from 'lucide-react';
+import { NewsletterForm } from '@/components/newsletter-form';
 
 const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
@@ -92,6 +93,10 @@ export default function HomePage() {
             </Link>
           );
         })}
+      </div>
+
+      <div className="mt-8">
+        <NewsletterForm />
       </div>
     </main>
   );
