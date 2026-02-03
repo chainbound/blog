@@ -7,55 +7,62 @@ tags: [privacy, cryptography]
 
 ## Introduction
 
-Privacy is back on the radar. Initiatives like
-[Kohaku](https://ethereum.github.io/kohaku/) are springing up, the price of
-Zcash increased 9-fold over the last year, and shielding protocols like
+Privacy is back on the public radar. Over the past year, multiple prominent
+players within the Ethereum ecosystem have been
+[unveiling](https://ethereum-magicians.org/t/a-maximally-simple-l1-privacy-roadmap/23459)
+[their](https://ethresear.ch/t/ethereum-privacy-the-road-to-self-sovereignty/22115)
+[privacy roadmaps](https://pse.dev/blog/pse-roadmap-2025). More recently, the
+Privacy & Scaling Explorations ([PSE](https://pse.dev/)) team have undergone a
+metamorphosis: they are now the Privacy Stewards of Ethereum. The price of Zcash
+increased 9-fold over the last year, and shielding protocols like
 [Railgun](https://www.railgun.org/) have
-[attracted a lot of liquidity](https://dune.com/railgun_project/railgun).
-However, in a recent [report](https://pse.dev/blog/privacy-experience-report) by
-PSE on the current privacy experience, many pain points that privacy-conscious
-users experience were laid out. One concern stood out to us in particular: a
-user setting up [Privacy Pools](https://privacypools.com/) locally was confused
-that they had to configure an Alchemy API key to get the front-end running
-locally.
+[continued growing in deposited liquidity](https://dune.com/railgun_project/railgun).
+Despite this rapid growth and renewed attention, a recent
+[report](https://pse.dev/blog/privacy-experience-report) by PSE shows that
+overall adoption remains low, with many pain points persisting for more privacy
+conscious users.
+
+One concern of the report stood out to us in particular: a user setting up
+[Privacy Pools](https://privacypools.com/) locally was confused that they had to
+configure an Alchemy API key to get the front-end running locally.
 
 > There are so many leaks if I’m using Alchemy… what is the point?
 
 They have a point. An API key is linked to an account on a certain platform,
 which contains personally identifiable information (PII). It also surfaces the
-full chain of requests made by a single account. The account is clearly needed
-for purchasing API credits, and potentially any compliance checks. But is the
-link between an API key and the PII really necessary? Additionally, do we really
-need a persistent identifier across _all_ requests? Can it be avoided so users
-can remain safe from honest-but-curious providers or data breaches? To answer
-this question, we’ll need to take a detour and look at a fairly annoying but
-ubiquitous aspect of browsing the internet: CAPTCHAs.
+full chain of requests made by that single account. Having an account is clearly
+needed for purchasing API credits, as well as potentially any compliance checks.
+But is the link between an API key and the PII really necessary? Additionally,
+do we really need a persistent identifier across _all_ requests? Can it be
+avoided so users can remain safe from honest-but-curious providers or data
+breaches? To answer this question, we’ll need to take a detour and look at a
+fairly annoying but ubiquitous aspect of browsing the internet: CAPTCHAs.
 
 ## CAPTCHAs & Privacy Pass
 
 CAPTCHAs were introduced to identify requests coming from humans instead of
-bots, used in website protection services like what Cloudflare offers. This was
-a necessary service to protect websites from DoS attacks, but it introduced a
-lot of friction for users. Millions of collective hours were wasted in solving
+bots, and are used in website protection services like Cloudflare. This was a
+necessary service to protect websites from DoS attacks, but it introduced a lot
+of friction for users. Millions of collective hours were wasted in solving
 semi-useless puzzles as a proxy for personhood.
 
 ![](/private-api-credits/captcha-meme.png)
 
 When [Privacy Pass](https://privacypass.github.io/) was introduced in 2017,
-Cloudflare was one of the
+Cloudflare was one of its
 [first adopters](https://blog.cloudflare.com/cloudflare-supports-privacy-pass/).
 Why? Because Privacy Pass provided a way to drastically reduce the amount of
-CAPTCHAs users had to solve online, while maintaining privacy. This last part is
-important. Cloudflare could technically issue a persistent identifier to users
-solving a CAPTCHA, that can be redeemed every time a user is presented another
-challenge. But that would allow Cloudflare to trivially track the complete
-browsing history of a user. Not great.
+CAPTCHAs users had to solve online, all while maintaining user privacy. This
+last part is important. Cloudflare could technically issue a persistent
+identifier to users solving a CAPTCHA, that can be redeemed every time a user is
+presented another challenge. But that would allow Cloudflare to trivially track
+the complete browsing history of a user. Not great.
 
 The Privacy Pass protocol solves this by leveraging smart cryptography. Instead
 of a persistent identifier, successful solvers of a CAPTCHA get a set of blinded
 tokens that are signed by Cloudflare. The magic happens when the user receives
 these signed, blinded tokens: they can unblind them into a form that is
-cryptographically unlinkable to the original blinded token, but the
+cryptographically unlinkable to the original blinded token, all while the
 cryptographic signature representing the stamp of approval remains valid! These
 unblinded tokens are what the user (the Privacy Pass extension to be exact)
 redeems when they are presented with a challenge, and Cloudflare allows them to
