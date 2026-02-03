@@ -25,6 +25,11 @@ export const metadata: Metadata = {
     template: '%s | Chainbound Blog',
   },
   description: 'Technical blog by Chainbound',
+  alternates: {
+    types: {
+      'application/rss+xml': '/rss.xml',
+    },
+  },
   icons: {
     icon: [
       // Light mode - dark icon
