@@ -34,9 +34,9 @@ const config = {
         permanent: true,
       },
       {
-        source: '/flowproxy-v2',
+        source: '/flowproxy-optimality',
         destination: '/flowproxy-approaching-optimality',
-        permanent: true,
+        permanent: false,
       },
     ];
   },
