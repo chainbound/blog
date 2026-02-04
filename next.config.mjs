@@ -33,11 +33,6 @@ const config = {
         destination: '/verifiable-continuous-sequencing-with-delay-functions',
         permanent: true,
       },
-      {
-        source: '/flowproxy-optimality',
-        destination: '/flowproxy-approaching-optimality',
-        permanent: false,
-      },
     ];
   },
 };
