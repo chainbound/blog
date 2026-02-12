@@ -1,98 +1,49 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { blog } from '@/lib/source';
-import { getAuthor } from '@/lib/authors';
-import { Calendar } from 'lucide-react';
-
-const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
+import { HomePageContent } from "@/components/home-page-content";
+import { getAuthor } from "@/lib/authors";
+import { blog } from "@/lib/source";
 
 export default function HomePage() {
   const posts = [...blog.getPages()]
     .filter((post) => !post.data.hidden)
-    .sort(
-      (a, b) =>
-        new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
+    .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+  // Calculate earliest year from posts
+  const earliestYear = Math.min(...posts.map((p) => new Date(p.data.date).getFullYear()));
+
+  // Get top 5 most popular tags
+  const tagCounts = posts
+    .flatMap((p) => p.data.tags || [])
+    .reduce(
+      (acc, tag) => {
+        acc[tag] = (acc[tag] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
     );
+  const topTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag]) => tag);
+
+  // Transform posts for the client component
+  const transformedPosts = posts.map((post) => ({
+    url: post.url,
+    title: post.data.title,
+    description: post.data.description,
+    date:
+      typeof post.data.date === "string"
+        ? post.data.date
+        : post.data.date.toISOString().slice(0, 10),
+    authors: post.data.authors.map(getAuthor),
+    tags: post.data.tags,
+  }));
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-12">
-      <h1 className={`text-3xl font-medium mb-12 text-center ${fontMono}`}>
-        Chainbound Blog
-      </h1>
-
-      <div className="flex flex-col gap-8">
-        {posts.map((post) => {
-          const authorDetails = post.data.authors.map(getAuthor);
-
-          return (
-            <Link
-              key={post.url}
-              href={post.url}
-              className="group flex flex-col border-b border-fd-border pb-8 transition-colors"
-            >
-              <div>
-                <h2
-                  className={`text-xl font-medium mb-2 group-hover:text-fd-primary transition-colors ${fontMono}`}
-                >
-                  {post.data.title}
-                </h2>
-
-                <p className="text-fd-muted-foreground mb-4">
-                  {post.data.description}
-                </p>
-
-                <div
-                  className={`flex flex-wrap items-center gap-3 text-sm text-fd-muted-foreground ${fontMono}`}
-                >
-                  <div className="flex items-center gap-4">
-                    {authorDetails.map((author) => (
-                      <span
-                        key={author.name}
-                        className="inline-flex items-center gap-1.5"
-                      >
-                        {author.avatar && (
-                          <Image
-                            src={author.avatar}
-                            alt={author.name}
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                          />
-                        )}
-                        <span className="text-fd-foreground">
-                          {author.name}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <time className="inline-flex items-center gap-1.5">
-                    <Calendar className="size-4" />
-                    {new Date(post.data.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </time>
-                </div>
-
-                {post.data.tags && post.data.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {post.data.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className={`inline-flex items-center rounded-full border border-fd-primary/20 bg-fd-primary/10 px-2.5 py-0.5 text-xs font-medium text-fd-primary ${fontMono}`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </main>
+    <HomePageContent
+      postsLength={posts.length}
+      earliestYear={earliestYear}
+      posts={transformedPosts}
+      topTags={topTags}
+    />
   );
 }

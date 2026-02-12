@@ -1,9 +1,10 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
 .light {
-  --color-fd-primary: rgb(238, 184, 21);
+  --color-fd-primary: rgb(239, 181, 5);
 }
 
 .dark {
@@ -49,4 +50,102 @@ article small {
 .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show)
   .maplibregl-ctrl-attrib-inner {
   display: none !important;
+}
+
+/* Homepage entrance: CSS-only keyframe animations (no JS). Content is never hidden by script. */
+@keyframes home-entrance-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-entrance-list-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-entrance-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes article-entrance-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-page .home-entrance {
+    animation: home-entrance-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .home-page .home-entrance-delay-1 { animation-delay: 60ms; }
+  .home-page .home-entrance-delay-2 { animation-delay: 140ms; }
+  .home-page .home-entrance-delay-3 { animation-delay: 220ms; }
+
+  .home-page .home-entrance-list {
+    animation: home-entrance-list-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+  }
+
+  .home-page .home-entrance-list .home-entrance-list-item {
+    animation: home-entrance-item-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(1) { animation-delay: 380ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(2) { animation-delay: 420ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(3) { animation-delay: 460ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(4) { animation-delay: 500ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(5) { animation-delay: 540ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(6) { animation-delay: 580ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(7) { animation-delay: 620ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(8) { animation-delay: 660ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(9) { animation-delay: 700ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(10) { animation-delay: 740ms; }
+  .home-page .home-entrance-list .home-entrance-list-item:nth-child(n+11) { animation-delay: 780ms; }
+
+  /* Advisory page: same entrance as homepage */
+  .advisory-page .page-entrance {
+    animation: home-entrance-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .advisory-page .page-entrance-delay-1 { animation-delay: 60ms; }
+  .advisory-page .page-entrance-delay-2 { animation-delay: 140ms; }
+  .advisory-page .page-entrance-delay-3 { animation-delay: 220ms; }
+  .advisory-page .page-entrance-delay-4 { animation-delay: 300ms; }
+  .advisory-page .page-entrance-block {
+    animation: home-entrance-list-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .advisory-page .page-entrance-block:nth-child(1) { animation-delay: 320ms; }
+  .advisory-page .page-entrance-block:nth-child(2) { animation-delay: 400ms; }
+
+  /* Blog article: subtle entrance (shorter motion, faster) */
+  .article-page .article-entrance {
+    animation: article-entrance-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .article-page .article-entrance-delay-1 { animation-delay: 0ms; }
+  .article-page .article-entrance-delay-2 { animation-delay: 50ms; }
+  .article-page .article-entrance-delay-3 { animation-delay: 100ms; }
+  .article-page .article-entrance-delay-4 { animation-delay: 150ms; }
+  .article-page .article-entrance-delay-5 { animation-delay: 200ms; }
+  .article-page .article-entrance-delay-6 { animation-delay: 250ms; }
 }

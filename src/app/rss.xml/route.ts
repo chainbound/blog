@@ -1,5 +1,5 @@
-import { baseUrl, blog } from '@/lib/source';
 import { getAuthor } from '@/lib/authors';
+import { baseUrl, blog } from '@/lib/source';
 
 export const revalidate = false;
 
