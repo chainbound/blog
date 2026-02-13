@@ -157,7 +157,7 @@ export default async function Page(props: {
                 {page.data.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2.5 py-0.5 text-xs rounded-full bg-fd-primary/10 text-fd-primary border border-fd-primary/20"
+                    className="px-2.5 py-0.5 text-xs rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
                   >
                     {tag}
                   </span>

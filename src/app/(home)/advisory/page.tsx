@@ -75,20 +75,16 @@ export default function AdvisoryPage() {
             <div className="space-y-5">
               {[
                 {
-                  title: "MEV & Orderflow",
-                  desc: "Searcher strategies, block building, PBS, and value extraction optimization.",
+                  title: "Networking",
+                  desc: "Custom networking solutions for decentralized systems, delivering higher throughput, lower latency and maximum robustness.",
                 },
                 {
-                  title: "Protocol Design",
-                  desc: "Mechanism design, cryptoeconomics, consensus, and security analysis.",
+                  title: "Cryptography",
+                  desc: "Cryptographic solutions like ZK, MPC and TEEs, to build truly private, secure, and verifiable protocols.",
                 },
                 {
-                  title: "Infrastructure",
-                  desc: "High-performance systems, P2P networking, and scalability engineering.",
-                },
-                {
-                  title: "Research",
-                  desc: "Deep technical research into emerging blockchain technologies and standards.",
+                  title: "Performance Engineering",
+                  desc: "Improving the performance of networks, distributed systems and cryptographic primitives, to provide web3 experiences on par with web2.",
                 },
               ].map((item) => (
                 <div
