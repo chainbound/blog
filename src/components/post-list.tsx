@@ -42,7 +42,7 @@ export function PostList({
           <button
             type="button"
             onClick={() => setSelectedTag(null)}
-            className={`hover:underline focus-visible:underline focus-visible:outline-none ${
+            className={`cursor-pointer hover:underline focus-visible:underline focus-visible:outline-none ${
               selectedTag === null ? "text-fd-primary" : "text-fd-muted-foreground"
             }`}
           >
@@ -54,7 +54,7 @@ export function PostList({
               <button
                 type="button"
                 onClick={() => setSelectedTag(tag)}
-                className={`hover:underline focus-visible:underline focus-visible:outline-none ${
+                className={`cursor-pointer hover:underline focus-visible:underline focus-visible:outline-none ${
                   selectedTag === tag ? "text-fd-primary" : "text-fd-muted-foreground"
                 }`}
               >
@@ -70,7 +70,7 @@ export function PostList({
           <button
             type="button"
             onClick={() => setSortOrder(sortOrder === "newest" ? "oldest" : "newest")}
-            className="text-fd-primary hover:underline"
+            className="text-fd-primary hover:underline cursor-pointer"
           >
             {sortOrder === "newest" ? "newest first ↓" : "oldest first ↑"}
           </button>
