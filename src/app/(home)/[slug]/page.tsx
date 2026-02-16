@@ -102,6 +102,7 @@ export default async function Page(props: {
 											) : (
 												<div
 													key={author.name}
+													aria-hidden="true"
 													className="w-7 h-7 rounded-full bg-fd-muted border-2 border-fd-background"
 												/>
 											),
@@ -141,8 +142,11 @@ export default async function Page(props: {
 								</span>
 							</div>
 							<span className="text-fd-border hidden sm:inline">·</span>
-							<time className="inline-flex items-center gap-1.5">
-								<Calendar className="size-4" />
+							<time
+								dateTime={new Date(page.data.date).toISOString()}
+								className="inline-flex items-center gap-1.5"
+							>
+								<Calendar className="size-4" aria-hidden="true" />
 								{new Date(page.data.date).toLocaleDateString("en-US", {
 									year: "numeric",
 									month: "long",

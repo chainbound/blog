@@ -42,7 +42,7 @@ export function PostList({
           <button
             type="button"
             onClick={() => setSelectedTag(null)}
-            className={`hover:underline ${
+            className={`hover:underline focus-visible:underline focus-visible:outline-none ${
               selectedTag === null ? "text-fd-primary" : "text-fd-muted-foreground"
             }`}
           >
@@ -54,7 +54,7 @@ export function PostList({
               <button
                 type="button"
                 onClick={() => setSelectedTag(tag)}
-                className={`hover:underline ${
+                className={`hover:underline focus-visible:underline focus-visible:outline-none ${
                   selectedTag === tag ? "text-fd-primary" : "text-fd-muted-foreground"
                 }`}
               >
@@ -84,6 +84,7 @@ export function PostList({
             <article className="flex gap-4 py-4 border-b border-fd-border/50">
               {/* Date - visible on desktop only, left column */}
               <time
+                dateTime={post.date}
                 className={`hidden mt-1.5 md:block text-fd-muted-foreground text-xs w-24 shrink-0 mt-1 ${fontMono}`}
               >
                 {new Date(post.date).toISOString().split("T")[0]}
@@ -103,7 +104,7 @@ export function PostList({
                   className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fd-muted-foreground ${fontMono}`}
                 >
                   {/* Date - visible on mobile only, inline */}
-                  <time className="md:hidden">
+                  <time dateTime={post.date} className="md:hidden">
                     {new Date(post.date).toISOString().split("T")[0]}
                   </time>
                   <span className="md:hidden text-fd-border">·</span>

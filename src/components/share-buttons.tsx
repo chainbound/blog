@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 const fontMono = "font-[family-name:var(--font-at-hauss-mono)]";
 
@@ -11,11 +12,14 @@ interface ShareButtonsProps {
 }
 
 export function ShareButtons({ title, url }: ShareButtonsProps) {
+  const [copied, setCopied] = useState(false);
   const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (_err: unknown) {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
@@ -24,6 +28,8 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -41,14 +47,15 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 hover:text-fd-primary transition-colors"
         >
-          x/twitter <ArrowUpRight className="size-3" />
+          x/twitter <ArrowUpRight className="size-3" aria-hidden="true" />
         </a>
         <button
           type="button"
           onClick={copyToClipboard}
           className="hover:text-fd-primary transition-colors cursor-pointer"
+          aria-live="polite"
         >
-          copy link
+          {copied ? "copied!" : "copy link"}
         </button>
       </div>
     </div>

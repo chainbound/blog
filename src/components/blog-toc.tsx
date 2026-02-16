@@ -109,15 +109,16 @@ export function BlogToc({ items }: BlogTocProps) {
   const { segments } = buildPathSegments();
 
   return (
-    <nav className={`text-sm ${fontMono}`}>
-      <h3 className="inline-flex items-center gap-1.5 text-fd-muted-foreground mb-4">
-        <Text className="size-4" />
+    <nav aria-label="Table of contents" className={`text-sm ${fontMono}`}>
+      <p className="inline-flex items-center gap-1.5 text-fd-muted-foreground mb-4">
+        <Text className="size-4" aria-hidden="true" />
         On this page
-      </h3>
+      </p>
       {/* Clerk-style TOC with angled indicator */}
       <div className="relative">
         {/* SVG for the indicator line */}
         <svg
+          aria-hidden="true"
           className="absolute left-0 top-0 w-8 h-full pointer-events-none"
           style={{ overflow: 'visible' }}
         >

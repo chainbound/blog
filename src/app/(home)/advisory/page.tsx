@@ -139,35 +139,53 @@ export default function AdvisoryPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
+                  <label htmlFor="advisory-name" className="sr-only">
+                    Name
+                  </label>
                   <input
+                    id="advisory-name"
                     type="text"
                     name="name"
                     required
-                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary transition-colors ${fontMono}`}
+                    aria-label="Name"
+                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary focus:ring-2 focus:ring-fd-primary/20 transition-colors ${fontMono}`}
                     placeholder="Name"
                   />
                 </div>
                 <div>
+                  <label htmlFor="advisory-email" className="sr-only">
+                    Email
+                  </label>
                   <input
+                    id="advisory-email"
                     type="email"
                     name="email"
                     required
-                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary transition-colors ${fontMono}`}
+                    aria-label="Email"
+                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary focus:ring-2 focus:ring-fd-primary/20 transition-colors ${fontMono}`}
                     placeholder="Email"
                   />
                 </div>
                 <div>
+                  <label htmlFor="advisory-message" className="sr-only">
+                    Message
+                  </label>
                   <textarea
+                    id="advisory-message"
                     name="message"
                     required
+                    aria-label="Tell us about your project"
                     rows={5}
-                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary transition-colors resize-none ${fontMono}`}
+                    className={`w-full bg-transparent border border-fd-border px-4 py-3 text-sm focus:outline-none focus:border-fd-primary focus:ring-2 focus:ring-fd-primary/20 transition-colors resize-none ${fontMono}`}
                     placeholder="Tell us about your project..."
                   />
                 </div>
 
                 {status === "error" && (
-                  <p className={`text-sm text-red-500 ${fontMono}`}>{errorMessage}</p>
+                  <p className={`text-sm text-red-500 ${fontMono}`} role="alert">
+                    <span aria-hidden="true">⚠ </span>
+                    {errorMessage}
+                  </p>
                 )}
 
                 <button
