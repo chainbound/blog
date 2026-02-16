@@ -1,5 +1,5 @@
+import { baseUrl, blog } from '@/lib/source';
 import type { MetadataRoute } from 'next';
-import { blog, baseUrl } from '@/lib/source';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = blog.getPages().map((page) => ({

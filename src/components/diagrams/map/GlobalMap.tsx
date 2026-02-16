@@ -1,29 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Server as ServerIcon } from 'lucide-react';
 import {
   Map as MapComponent,
+  MapControls,
   MapMarker,
-  MarkerContent,
-  MarkerTooltip,
   MapPopup,
   MapRoute,
-  MapControls,
+  MarkerContent,
+  MarkerTooltip,
 } from '@/components/ui/map';
+import { Server as ServerIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import type { Connection as ConnectionType, GlobalMapProps } from './types';
 import {
-  normalizeMetric,
-  getConnectionColor,
-  getStrokeWidth,
-  getOpacity,
   formatMetric,
+  getConnectionColor,
   getMetricLabel,
+  getOpacity,
+  getStrokeWidth,
+  normalizeMetric,
 } from './utils';
-import type {
-  GlobalMapProps,
-  Server,
-  Connection as ConnectionType,
-} from './types';
 
 export function GlobalMap({
   servers,

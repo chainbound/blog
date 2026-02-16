@@ -74,8 +74,6 @@ In the project, you can see:
 - `lib/source.ts`: Code for content source adapter,
   [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the
   interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to
-  keep.
 
 | Route                     | Description                                            |
 | ------------------------- | ------------------------------------------------------ |

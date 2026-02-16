@@ -2,8 +2,10 @@
 
 import MapLibreGL, { type PopupOptions, type MarkerOptions } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Loader2, Locate, Maximize, Minus, Plus, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import {
+  type ReactNode,
   createContext,
   forwardRef,
   useCallback,
@@ -14,13 +16,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Minus, Plus, Locate, Maximize, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import React from 'react';
+import type React from 'react';
 
 type MapContextValue = {
   map: MapLibreGL.Map | null;
