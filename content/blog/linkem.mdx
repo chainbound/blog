@@ -1,5 +1,5 @@
 ---
-title: 'msg-sim: Building a Rust Network Emulator from Scratch'
+title: 'Linkem: Building a Rust Network Emulator from Scratch'
 authors: [lorenzo]
 date: 2026-01-15
 tags: [rust, oss]
@@ -15,7 +15,7 @@ ran into the necessity of emulating real networks with latency, jitter, packet
 loss, and bandwidth constraints. We needed a way to test under realistic
 conditions without setting up actual distributed infrastructure.
 
-**msg-sim** is what we ended up building. It's a Rust library that creates
+**Linkem** is what we ended up building. It's a Rust library that creates
 isolated network peers using Linux namespaces and injects network impairments
 between them, fully leveraging the kernel TCP/IP stack for modelling traffic.
 This article documents how it works and the decisions we made along the way.
@@ -107,13 +107,13 @@ between them, and run async code inside each peer's isolated namespace.
 Add the library to your project:
 
 ```bash
-cargo add msg-sim --git https://github.com/chainbound/msg-rs
+cargo add linkem
 ```
 
 And then model your network with it!
 
 ```rust
-use msg_sim::*;
+use linkem::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 #[tokio::main]
@@ -217,7 +217,7 @@ receive buffer autotuning, bounded by `tcp_rmem` and `rmem_max`, and may exceed
 parameters: `tcp_window_scaling` enables the feature, and `tcp_rmem` sets the
 buffer sizes.
 
-With msg-sim, we can actually play around with these settings. Set up a 10
+With `linkem`, we can actually play around with these settings. Set up a 10
 Mbit/s link with 40ms RTT, then:
 
 1. **Disable window scaling, use 64 KB max buffer**: Transfer throughput is
@@ -254,7 +254,7 @@ Mbit/s link with 40ms RTT, then:
        .await?;
    ```
 
-[In this example](https://github.com/chainbound/msg-rs/blob/main/msg-sim/examples/bdp_throughput.rs),
+[In this example](https://github.com/chainbound/msg-rs/blob/main/linkem/examples/bdp_throughput.rs),
 you can see the difference in measured throughput. And the test runs against the
 real Linux TCP stack, with real kernel buffer management. You can tune
 `tcp_rmem` in one namespace without affecting others, given each namespace has
@@ -281,13 +281,13 @@ Window scaling + larger buffers improved throughput by 46%!
 
 ## How It Works
 
-Under the hood, msg-sim creates a hub-and-spoke network topology using Linux
+Under the hood, Linkem creates a hub-and-spoke network topology using Linux
 namespaces:
 
 ```mermaid
 flowchart TB
     subgraph hub["Hub Namespace"]
-        bridge["Bridge Device\nmsg-sim-br0"]
+        bridge["Bridge Device\nlinkem-br0"]
         veth1["hub-veth-1"]
         veth2["hub-veth-2"]
         veth3["hub-veth-3"]
@@ -338,7 +338,7 @@ out to `tc` commands.
 
 ### Previous implementation
 
-The current `msg-sim` is actually a rewrite. The first version was a wrapper
+The current `linkem` is actually a rewrite. The first version was a wrapper
 around `tc` and `ip` shell commands — it could create namespaces and apply
 impairments, but the implementation was brittle. Shelling out meant parsing text
 output and debugging failures through command-line error messages. The code was
@@ -387,7 +387,7 @@ latency, packet loss).
 
 ## Closing Notes
 
-`msg-sim` is still in alpha — the API and ergonomics are evolving as we use it
+`linkem` is still in alpha — the API and ergonomics are evolving as we use it
 ourselves and learn what works best. If you're building distributed systems in
 Rust and need realistic network testing, we'd love for you to try it out.
 
@@ -400,6 +400,6 @@ We're especially interested in feedback on:
   with different kernels, or minimal Linux environments are exactly what we need
   to hear about.
 
-Check out the [API documentation](https://docs.rs/msg-sim) or open an issue on
+Check out the [API documentation](https://docs.rs/linkem) or open an issue on
 the [GitHub repo](https://github.com/chainbound/msg-rs). Suggestions, bug
 reports, and contributions are all welcome.

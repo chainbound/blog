@@ -33,6 +33,11 @@ const config = {
         destination: '/verifiable-continuous-sequencing-with-delay-functions',
         permanent: true,
       },
+      {
+        source: '/msg-sim',
+        destination: '/linkem',
+        permanent: true,
+      }
     ];
   },
 };
