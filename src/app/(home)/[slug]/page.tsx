@@ -62,6 +62,31 @@ export default async function Page(props: {
 
 	const postUrl = `${baseUrl}/${params.slug}`;
 
+	const currentTags = new Set(page.data.tags ?? []);
+	const suggestedPosts = blog
+		.getPages()
+		.filter((candidate) => !candidate.data.hidden && candidate.slugs[0] !== params.slug)
+		.map((candidate) => {
+			const candidateTags = candidate.data.tags ?? [];
+			const sharedTags = candidateTags.filter((tag) => currentTags.has(tag));
+
+			return {
+				url: candidate.url,
+				title: candidate.data.title,
+				description: candidate.data.description,
+				date: new Date(candidate.data.date),
+				sharedTags,
+			};
+		})
+		.sort((a, b) => {
+			if (b.sharedTags.length !== a.sharedTags.length) {
+				return b.sharedTags.length - a.sharedTags.length;
+			}
+
+			return b.date.getTime() - a.date.getTime();
+		})
+		.slice(0, 3);
+
 	return (
 		<div className="article-page min-h-screen bg-fd-background">
 			{/* Main layout container - aligned with header max-w-5xl */}
@@ -185,6 +210,55 @@ export default async function Page(props: {
 						<div className="article-entrance article-entrance-delay-6">
 							<ShareButtons title={page.data.title} url={postUrl} />
 						</div>
+
+						{/* Suggested reads */}
+						{suggestedPosts.length > 0 && (
+							<section className="mt-10 border-t border-fd-border/50 pt-8 article-entrance article-entrance-delay-6">
+								<h2 className={`text-xl font-medium mb-1 ${fontMono}`}>next reads</h2>
+								<p className="text-sm text-fd-muted-foreground mb-5">
+									Keep the thread going with related posts.
+								</p>
+								<div className="space-y-0 [&>a:last-child>article]:border-b-0">
+									{suggestedPosts.map((suggestedPost) => (
+										<Link
+											key={suggestedPost.url}
+											href={suggestedPost.url}
+											className="group block"
+										>
+											<article className="py-4 border-b border-fd-border/50">
+												<h3
+													className={`text-base font-medium mb-1 group-hover:text-fd-primary transition-colors ${fontMono}`}
+												>
+													{suggestedPost.title}
+												</h3>
+												{suggestedPost.description && (
+													<p className="text-sm text-fd-muted-foreground leading-relaxed mb-2">
+														{suggestedPost.description}
+													</p>
+												)}
+												<div
+													className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fd-muted-foreground ${fontMono}`}
+												>
+													<time dateTime={suggestedPost.date.toISOString()}>
+														{suggestedPost.date.toISOString().split("T")[0]}
+													</time>
+													{suggestedPost.sharedTags.length > 0 && (
+														<>
+															<span className="text-fd-border">·</span>
+															{suggestedPost.sharedTags.slice(0, 2).map((tag) => (
+																<span key={tag} className="text-yellow-500">
+																	#{tag.toLowerCase().replace(" ", "-")}
+																</span>
+															))}
+														</>
+													)}
+												</div>
+											</article>
+										</Link>
+									))}
+								</div>
+							</section>
+						)}
 					</article>
 
 					{/* TOC sidebar - hidden on smaller screens */}
