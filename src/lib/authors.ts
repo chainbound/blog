@@ -24,6 +24,11 @@ export const authors = {
     url: 'https://x.com/iampamungkaski',
     avatar: 'https://unavatar.io/twitter/iampamungkaski',
   },
+  karrq: {
+    name: 'Karrq',
+    url: 'https://x.com/LandKingdom',
+    avatar: 'https://unavatar.io/twitter/LandKingdom',
+  },
   // Add more authors here
 } as const;
 
