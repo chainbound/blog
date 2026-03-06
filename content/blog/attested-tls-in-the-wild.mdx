@@ -2,30 +2,32 @@
 title: 'Attested TLS in the Wild'
 authors: [karrq]
 date: 2026-03-06
-tags: [security, networking, tees]
+tags: [networking, tee, cryptography]
 hidden: false
 description:
     'An exploration of attested TLS for fully confidential, end-to-end attested TEE communication'
 ---
 
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
 # Introduction
 
 Trusted Execution Environments (TEEs) are a practical foundation for confidential computing: they protect code and memory at runtime, even when the surrounding host is not fully trusted.
 
-But distributed systems are remote by default, so the question becomes: how does a client verify that it’s really talking to a TEE endpoint, that the channel terminates inside that TEE (no eavesdropping), and that the endpoint is running the expected software?
+But distributed systems are remote by default, so the question becomes: how does a client verify that it's really talking to a TEE endpoint, that the channel terminates inside that TEE (no eavesdropping), and that the endpoint is running the expected software?
 
-Transport Layer Security (TLS) provides part of the answer: channel confidentiality and authenticity. A client can authenticate a server through a public key (Web PKI). However, TLS alone doesn’t show that the key is usable only from inside the TEE. To get that guarantee, you need a way to prove what runtime generated that key, and to bind those runtime claims to the specific live session.
+Transport Layer Security (TLS) provides part of the answer: channel confidentiality and authenticity. A client can authenticate a server through a public key (Web PKI). However, TLS alone doesn't show that the key is usable only from inside the TEE. To get that guarantee, you need a way to prove what runtime generated that key, and to bind those runtime claims to the specific live session.
 
 This is where attested TLS (aTLS) comes in: bind remote attestation evidence to the live TLS session so peers can verify transport identity, TEE authenticity, and expected runtime state.
 
-<Callout type="info">
+<Callout type="idea" icon={<IdeaIcon />}>
 Put differently, aTLS answers one question: does this session key belong to this measured software instance?
 </Callout>
 
-In this post, we describe how we handled this in practice while migrating a network of TEEs from libp2p to a new transport. We first shipped a working TEE-to-TEE mutual attestation flow, then mapped it to the aTLS draft and reference implementation to understand what we matched, what we didn’t, and what the extra mechanisms buy you under different threat models.
+In this post, we describe how we handled this in practice while migrating a network of TEEs from libp2p to a new transport. We first shipped a working TEE-to-TEE mutual attestation flow, then mapped it to the aTLS draft and reference implementation to understand what we matched, what we didn't, and what the extra mechanisms buy you under different threat models.
 
-<Callout type="info">
-In this article, when we refer to aTLS we are always talking about **Post-Handshake** Attested TLS, as that’s the pattern we are using in our implementation.
+<Callout type="warning">
+In this article, when we refer to aTLS we are always talking about **Post-Handshake** Attested TLS, as that's the pattern we are using in our implementation.
 There are 2 more variants of aTLS currently in discussion within the IETF: **Pre-Handshake** and **Intra-Handshake,** both covered by the FOSDEM talk referenced below.
 </Callout>
 
@@ -45,7 +47,7 @@ TLS gives you an encrypted channel and proof of key ownership; remote attestatio
 
 TLS 1.3 starts with a handshake that negotiates fresh session keys and authenticates certificate key ownership. In mutual TLS, both peers present certificates and prove possession of their private keys by signing a challenge.
 
-This gives you an encrypted and authenticated channel, addressing the first 2 problems, although it doesn’t really provide any assurances that you are talking to a TEE directly (second half of problem 2) or that you are indeed communicating to the *exact* TEE you are expecting (problem 3).
+This gives you an encrypted and authenticated channel, addressing the first 2 problems, although it doesn't really provide any assurances that you are talking to a TEE directly (second half of problem 2) or that you are indeed communicating to the *exact* TEE you are expecting (problem 3).
 
 ## What aTLS Adds
 
@@ -92,9 +94,9 @@ That requirement shaped our transport design, which we are describing next.
 
 After a mutual TLS handshake establishes an encrypted channel and verifies peer certificates, both peers run an attestation exchange to complete the custom handshake.
 
-Each side extracts the other peer’s certificate public key from the active TLS session, asks the local TEE runtime for their own evidence bound to that session, and exchanges attestation payloads over the encrypted channel, verifying that the received payload is valid against the extracted peer’s certificate public key and TEE runtime state.
+Each side extracts the other peer's certificate public key from the active TLS session, asks the local TEE runtime for their own evidence bound to that session, and exchanges attestation payloads over the encrypted channel, verifying that the received payload is valid against the extracted peer's certificate public key and TEE runtime state.
 
-Since each node generates a self-signed peer certificate at startup, the transport identity is ephemeral and tied to the TEE’s lifetime. Making use of this allows us to guarantee that the only entity in possession of the certificate and that could thus complete the handshake *must* be the intended TEE peer we just verified.
+Since each node generates a self-signed peer certificate at startup, the transport identity is ephemeral and tied to the TEE's lifetime. Making use of this allows us to guarantee that the only entity in possession of the certificate and that could thus complete the handshake *must* be the intended TEE peer we just verified.
 
 In TDX (and similar TEE platforms), this attestation evidence is called a **quote**: a hardware-signed statement that includes measurements, including cryptographic digests of the code, configuration, and initial state loaded into the TEE. In addition, a quote also carries caller-supplied input data, which is how we bind it to TLS identity: the caller includes the TLS cert public key as input data.
 
@@ -127,7 +129,7 @@ sequenceDiagram
     end
 ```
 
-In production, we also bind a stable identity (for example the node operator) to the ephemeral TLS session so auditing and policy stay stable even as transport keys rotate. 
+In production, we also bind a stable identity (for example the node operator) to the ephemeral TLS session so auditing and policy stay stable even as transport keys rotate.
 
 With that flow in place, the integration point became clear: the attestation check should run after transport setup, but before protocol traffic is accepted.
 
@@ -135,74 +137,80 @@ With that flow in place, the integration point became clear: the attestation che
 
 [`msg-rs`](https://github.com/chainbound/msg-rs), our Rust messaging transport library, recently introduced connection hooks that run after transport setup and before protocol traffic. Connection hooks make it trivial to implement application-layer handshakes, which is exactly where attestation belongs.
 
-> If you want more context on `msg-rs`, we covered it in previous entries such as [Linkem](https://engineering.chainbound.io/linkem) and [Introducing Flowproxy](https://engineering.chainbound.io/introducing-flowproxy).
-> 
+<Callout type="info">
+If you want more context on `msg-rs`, we covered it in previous entries such as [Linkem](https://engineering.chainbound.io/linkem) and [Introducing Flowproxy](https://engineering.chainbound.io/introducing-flowproxy).
+</Callout>
 
-[`ConnectionHook`](https://docs.rs/msg-socket/latest/msg_socket/hooks/trait.ConnectionHook.html) was also the migration lever for us: it let us re-implement trust-boundary behavior that previously lived in fork-specific libp2p code as an explicit, reusable integration point in `msg-rs`. This preserved T+’s existing attestation requirement while keeping transport attestation out of business logic.
+[`ConnectionHook`](https://docs.rs/msg-socket/latest/msg_socket/hooks/trait.ConnectionHook.html) was also the migration lever for us: it let us re-implement trust-boundary behavior that previously lived in fork-specific libp2p code as an explicit, reusable integration point in `msg-rs`. This preserved T+'s existing attestation requirement while keeping transport attestation out of business logic.
 
-- If code is more your *vibe* than prose, here’s a short example taken from the library
-    
-    The trait itself:
-    
-    ```rust
-      /// Runs after transport setup, before protocol traffic.
-      /// Return Ok(io) to accept, Err to reject and close.
-      trait ConnectionHook<Io> {
-          type Error;
-          async fn on_connection(&self, io: Io) -> HookResult<Io, Self::Error>;
-      }
-    ```
-    
-    A minimal attestation handshake hook:
-    
-    ```rust
-      impl<Io, F> ConnectionHook<Io> for AtlsServerHook<F>
-      where
-          Io: AsyncRead + AsyncWrite + Send + Unpin + 'static + TlsCerts,
-          F: Fn(&Bytes) -> bool + Send + Sync + 'static,
-      {
-          type Error = ServerHookError;
-    
-          async fn on_connection(&self, io: Io) -> HookResult<Io, Self::Error> {
-              // Obtain the peer certificate from the underlying transport
-              let client_cert = io.peer_cert();
-                        
-              let mut conn = Framed::new(io, Codec::new_server());
-    
-              // Wait for the client to send their attestation
-              let msg = conn.next().await
-                  .ok_or(Error::hook(ServerHookError::ConnectionClosed))?;
-    
-              let Message::Attestation(payload) = msg? else {
-                  return Err(Error::hook(ServerHookError::ExpectedAuthMessage));
-              };
-              
-              // Validate the client's attestation against the certificate used 
-              // for the TLS session
-              if !self.validate_attestation(payload, client_cert) {
-                  conn.send(auth::Message::Reject).await?;
-                  return Err(Error::hook(ServerHookError::Rejected));
-              }
-    
-              conn.send(Message::Authenticated).await?;
-              // remove Framed wrapper and return the, now attested, IO
-              Ok(conn.into_inner())
-          }
-      }
-    ```
-    
-    Wiring it up:
-    
-    ```rust
-      // Server: validate incoming attestations
-      let pub_socket = PubSocket::new(Tcp::default())
-          .with_connection_hook(AtlsServerHook::new());
-    
-      // Client: send attestation on connect
-      let sub_socket = SubSocket::new(Tcp::default())
-          .with_connection_hook(AtlsClientHook::new());
-    ```
-    
+If code is more your *vibe* than prose, here's a short example taken from the library:
+
+<Accordions type="single">
+<Accordion title="The trait itself">
+
+```rust
+/// Runs after transport setup, before protocol traffic.
+/// Return Ok(io) to accept, Err to reject and close.
+trait ConnectionHook<Io> {
+    type Error;
+    async fn on_connection(&self, io: Io) -> HookResult<Io, Self::Error>;
+}
+```
+
+</Accordion>
+<Accordion title="A minimal attestation handshake hook">
+
+```rust
+impl<Io, F> ConnectionHook<Io> for AtlsServerHook<F>
+where
+    Io: AsyncRead + AsyncWrite + Send + Unpin + 'static + TlsCerts,
+    F: Fn(&Bytes) -> bool + Send + Sync + 'static,
+{
+    type Error = ServerHookError;
+
+    async fn on_connection(&self, io: Io) -> HookResult<Io, Self::Error> {
+        // Obtain the peer certificate from the underlying transport
+        let client_cert = io.peer_cert();
+                  
+        let mut conn = Framed::new(io, Codec::new_server());
+
+        // Wait for the client to send their attestation
+        let msg = conn.next().await
+            .ok_or(Error::hook(ServerHookError::ConnectionClosed))?;
+
+        let Message::Attestation(payload) = msg? else {
+            return Err(Error::hook(ServerHookError::ExpectedAuthMessage));
+        };
+        
+        // Validate the client's attestation against the certificate used 
+        // for the TLS session
+        if !self.validate_attestation(payload, client_cert) {
+            conn.send(auth::Message::Reject).await?;
+            return Err(Error::hook(ServerHookError::Rejected));
+        }
+
+        conn.send(Message::Authenticated).await?;
+        // remove Framed wrapper and return the, now attested, IO
+        Ok(conn.into_inner())
+    }
+}
+```
+
+</Accordion>
+<Accordion title="Wiring it up">
+
+```rust
+// Server: validate incoming attestations
+let pub_socket = PubSocket::new(Tcp::default())
+    .with_connection_hook(AtlsServerHook::new());
+
+// Client: send attestation on connect
+let sub_socket = SubSocket::new(Tcp::default())
+    .with_connection_hook(AtlsClientHook::new());
+```
+
+</Accordion>
+</Accordions>
 
 With this abstraction in place, we can attach an attestation hook to the sockets that need trust enforcement. If attestation fails, the connection is rejected immediately before the application can make use of it.
 
@@ -210,7 +218,7 @@ With this abstraction in place, we can attach an attestation hook to the sockets
 
 With that working baseline in place, we mapped it against the aTLS draft to see where it aligned, where it diverged, and why.
 
-The current IETF draft standardizes this binding in a portable, interoperable way. Like our flow, aTLS runs attestation after a normal TLS 1.3 handshake. 
+The current IETF draft standardizes this binding in a portable, interoperable way. Like our flow, aTLS runs attestation after a normal TLS 1.3 handshake.
 
 The difference is in the machinery it uses, which rests on three building blocks:
 
@@ -268,7 +276,7 @@ A pragmatic rollout strategy is to start with cert-pubkey binding and a strict m
 
 # Other Sightings
 
-### Confer’s Private Inference
+### Confer's Private Inference
 
 The pattern shows up outside TLS as well. Confer's [Private inference](https://confer.to/blog/2026/01/private-inference/) writeup explains how they can serve fully private AI inference. They use [Noise](https://noiseprotocol.org/) Pipes instead of TLS, but the core idea is the same: bind attestation evidence to the cryptographic channel that carries protocol traffic.
 
@@ -278,14 +286,15 @@ The attestation topology differs, but the security shape is the same: verify quo
 
 ### Flashbots & MEV
 
-Another example is Flashbots' [attested-tls-proxy](https://github.com/flashbots/attested-tls-proxy), a reverse HTTP proxy that runs a post-handshake attestation exchange after a normal TLS 1.3 handshake, using ALPN (Application-Layer Protocol Negotiation) to signal that attestation is expected. 
+Another example is Flashbots' [attested-tls-proxy](https://github.com/flashbots/attested-tls-proxy), a reverse HTTP proxy that runs a post-handshake attestation exchange after a normal TLS 1.3 handshake, using ALPN (Application-Layer Protocol Negotiation) to signal that attestation is expected.
 
-Its binding event covers both the cert-pubkey and EKM rows of our threat-model menu! It does so by combining a hash of the TLS leaf certificate public key with TLS exporter material. 
+Its binding event covers both the cert-pubkey and EKM rows of our threat-model menu! It does so by combining a hash of the TLS leaf certificate public key with TLS exporter material.
 
-Flashbots use aTLS extensively throughout their confidential MEV products to provide their users with verifiable privacy. They’re also involved in developing the aTLS standard.
+Flashbots use aTLS extensively throughout their confidential MEV products to provide their users with verifiable privacy. They're also involved in developing the aTLS standard.
 
-> aTLS is best seen as the TLS-specific standardization of that broader channel-binding pattern.
-> 
+<Callout type="idea" icon={<IdeaIcon />}>
+aTLS is best seen as the TLS-specific standardization of that broader channel-binding pattern.
+</Callout>
 
 # Conclusion
 
@@ -295,7 +304,8 @@ Our path was not spec-first. We were migrating T+ from a forked networking stack
 
 That second step gave us a clear map of which guarantees we already had, which ones we did not, and why we might want each additional mechanism.
 
-> The right question is not "Did we implement every RFC mechanism?". The right question is "Which attacks matter for our deployment, and which mechanism closes that gap?".
-> 
+<Callout type="idea" icon={<IdeaIcon />}>
+The right question is not "Did we implement every RFC mechanism?". The right question is "Which attacks matter for our deployment, and which mechanism closes that gap?".
+</Callout>
 
 That framing turns aTLS from an all-or-nothing standard into a practical design toolbox for secure systems engineering.
