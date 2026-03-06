@@ -1,4 +1,5 @@
 import { BlogToc } from "@/components/blog-toc";
+import { IdeaIcon } from "@/components/mdx/idea-icon";
 import { Mermaid } from "@/components/mdx/mermaid";
 import { ShareButtons } from "@/components/share-buttons";
 import { getAuthor } from "@/lib/authors";
@@ -36,6 +37,7 @@ const mdxComponents = {
 	h4: createStyledHeading(defaultMdxComponents.h4, "text-lg"),
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	img: (props: ComponentProps<"img">) => <ImageZoom {...(props as any)} />,
+	IdeaIcon,
 	Mermaid,
 };
 
