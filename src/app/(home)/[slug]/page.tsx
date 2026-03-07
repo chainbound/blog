@@ -37,6 +37,26 @@ const mdxComponents = {
 	h4: createStyledHeading(defaultMdxComponents.h4, "text-lg"),
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	img: (props: ComponentProps<"img">) => <ImageZoom {...(props as any)} />,
+	pre: ({ children, ...props }: ComponentProps<"pre">) => {
+		if (
+			children &&
+			typeof children === "object" &&
+			"props" in children &&
+			children.props &&
+			typeof children.props === "object" &&
+			"className" in children.props &&
+			typeof children.props.className === "string" &&
+			children.props.className.includes("language-mermaid")
+		) {
+			const code =
+				"children" in children.props && typeof children.props.children === "string"
+					? children.props.children
+					: "";
+			return <Mermaid chart={code.trim()} />;
+		}
+
+		return <defaultMdxComponents.pre {...props}>{children}</defaultMdxComponents.pre>;
+	},
 	IdeaIcon,
 	Mermaid,
 };
