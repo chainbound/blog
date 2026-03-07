@@ -16,12 +16,10 @@ type Post = {
 
 export function HomePageContent({
   postsLength,
-  earliestYear,
   posts,
   topTags,
 }: {
   postsLength: number;
-  earliestYear: number;
   posts: Post[];
   topTags: string[];
 }) {
@@ -43,7 +41,7 @@ export function HomePageContent({
           >
             <span>{postsLength} posts</span>
             <span className="text-fd-border">·</span>
-            <span>since {earliestYear}</span>
+            <span>since 2023</span>
             <span className="text-fd-border">·</span>
             <Link
               href="/advisory"
