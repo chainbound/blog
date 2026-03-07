@@ -210,7 +210,7 @@ export default async function Page(props: {
 								{page.data.tags.map((tag) => (
 									<span
 										key={tag}
-										className="px-2.5 py-0.5 text-xs rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+										className="px-2.5 py-0.5 text-xs rounded-full bg-yellow-500/10 text-yellow-700 dark:text-yellow-500 border border-yellow-500/20"
 									>
 										{tag}
 									</span>
@@ -266,7 +266,7 @@ export default async function Page(props: {
 														<>
 															<span className="text-fd-border">·</span>
 															{suggestedPost.sharedTags.slice(0, 2).map((tag) => (
-																<span key={tag} className="text-yellow-500">
+																<span key={tag} className="text-yellow-700 dark:text-yellow-500">
 																	#{tag.toLowerCase().replace(" ", "-")}
 																</span>
 															))}

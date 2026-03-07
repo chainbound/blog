@@ -7,9 +7,6 @@ export default function HomePage() {
     .filter((post) => !post.data.hidden)
     .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 
-  // Calculate earliest year from posts
-  const earliestYear = Math.min(...posts.map((p) => new Date(p.data.date).getFullYear()));
-
   // Get top 5 most popular tags
   const tagCounts = posts
     .flatMap((p) => p.data.tags || [])
@@ -41,7 +38,6 @@ export default function HomePage() {
   return (
     <HomePageContent
       postsLength={posts.length}
-      earliestYear={earliestYear}
       posts={transformedPosts}
       topTags={topTags}
     />

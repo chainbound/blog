@@ -42,6 +42,7 @@ export function PostList({
           <button
             type="button"
             onClick={() => setSelectedTag(null)}
+            aria-pressed={selectedTag === null}
             className={`cursor-pointer hover:underline focus-visible:underline focus-visible:outline-none ${
               selectedTag === null ? "text-fd-primary" : "text-fd-muted-foreground"
             }`}
@@ -54,6 +55,7 @@ export function PostList({
               <button
                 type="button"
                 onClick={() => setSelectedTag(tag)}
+                aria-pressed={selectedTag === tag}
                 className={`cursor-pointer hover:underline focus-visible:underline focus-visible:outline-none ${
                   selectedTag === tag ? "text-fd-primary" : "text-fd-muted-foreground"
                 }`}
@@ -85,7 +87,7 @@ export function PostList({
               {/* Date - visible on desktop only, left column */}
               <time
                 dateTime={post.date}
-                className={`hidden mt-1.5 md:block text-fd-muted-foreground text-xs w-24 shrink-0 mt-1 ${fontMono}`}
+                className={`hidden md:block text-fd-muted-foreground text-xs w-24 shrink-0 mt-1 ${fontMono}`}
               >
                 {new Date(post.date).toISOString().split("T")[0]}
               </time>
@@ -113,7 +115,7 @@ export function PostList({
                     <>
                       <span className="text-fd-border">·</span>
                       {post.tags.slice(0, 2).map((tag, j) => (
-                        <span key={tag} className="text-yellow-500">
+                        <span key={tag} className="text-yellow-700 dark:text-yellow-500">
                           #{tag.toLowerCase().replace(" ", "-")}
                           {j < Math.min(post.tags?.length || 0, 2) - 1 && " "}
                         </span>

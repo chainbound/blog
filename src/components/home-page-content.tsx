@@ -16,12 +16,10 @@ type Post = {
 
 export function HomePageContent({
   postsLength,
-  earliestYear,
   posts,
   topTags,
 }: {
   postsLength: number;
-  earliestYear: number;
   posts: Post[];
   topTags: string[];
 }) {

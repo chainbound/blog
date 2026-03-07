@@ -25,7 +25,11 @@ export function Mermaid({ chart }: { chart: string }) {
   if (!mounted || (!lightSvg && !darkSvg)) return null;
 
   return (
-    <div className="my-6 flex justify-center overflow-x-auto [&_svg]:max-w-full [&_svg]:h-auto">
+    <div
+      role="img"
+      aria-label="Mermaid diagram"
+      className="my-6 flex justify-center overflow-x-auto [&_svg]:max-w-full [&_svg]:h-auto"
+    >
       <div
         className="block dark:hidden"
         dangerouslySetInnerHTML={{ __html: lightSvg }}

@@ -47,7 +47,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 hover:text-fd-primary transition-colors"
         >
-          x/twitter <ArrowUpRight className="size-3" aria-hidden="true" />
+          x/twitter <ArrowUpRight className="size-3" aria-hidden="true" /><span className="sr-only"> (opens in new tab)</span>
         </a>
         <button
           type="button"
