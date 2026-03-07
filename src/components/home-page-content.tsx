@@ -43,7 +43,7 @@ export function HomePageContent({
           >
             <span>{postsLength} posts</span>
             <span className="text-fd-border">·</span>
-            <span>since 2023</span>
+            <span>since {earliestYear}</span>
             <span className="text-fd-border">·</span>
             <Link
               href="/advisory"
