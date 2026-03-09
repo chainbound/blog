@@ -114,10 +114,10 @@ export function PostList({
                   {post.tags && post.tags.length > 0 && (
                     <>
                       <span className="text-fd-border">·</span>
-                      {post.tags.slice(0, 2).map((tag, j) => (
+                      {post.tags.slice(0, 3).map((tag, j) => (
                         <span key={tag} className="text-yellow-700 dark:text-yellow-500">
                           #{tag.toLowerCase().replace(" ", "-")}
-                          {j < Math.min(post.tags?.length || 0, 2) - 1 && " "}
+                          {j < Math.min(post.tags?.length || 0, 3) - 1 && " "}
                         </span>
                       ))}
                     </>
