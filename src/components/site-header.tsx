@@ -1,10 +1,10 @@
-import Image from "next/image";
-import { Rss } from "lucide-react";
-import Link from "next/link";
-import { HeaderSearchBar } from "./header-search-bar";
-import { ThemeToggle } from "./theme-toggle";
+import Image from 'next/image';
+import { Rss } from 'lucide-react';
+import Link from 'next/link';
+import { HeaderSearchBar } from './header-search-bar';
+import { ThemeToggle } from './theme-toggle';
 
-const fontMono = "font-[family-name:var(--font-at-hauss-mono)]";
+const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 export function SiteHeader() {
   return (
@@ -26,12 +26,17 @@ export function SiteHeader() {
               height={24}
               className="hidden dark:block"
             />
-            <span className={`text-sm text-fd-muted-foreground ${fontMono}`}>/blog</span>
+            <span className={`text-sm text-fd-muted-foreground ${fontMono}`}>
+              /blog
+            </span>
           </Link>
           <nav
             className={`flex items-center gap-4 sm:gap-6 text-sm text-fd-muted-foreground ${fontMono} shrink-0`}
           >
-            <Link href="/advisory" className="hover:text-fd-foreground transition-colors">
+            <Link
+              href="/advisory"
+              className="hover:text-fd-foreground transition-colors"
+            >
               advisory
             </Link>
             <a

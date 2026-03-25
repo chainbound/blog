@@ -37,7 +37,7 @@ const config = {
         source: '/msg-sim',
         destination: '/linkem',
         permanent: true,
-      }
+      },
     ];
   },
 };

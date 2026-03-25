@@ -20,7 +20,9 @@ interface BlogTocProps {
 export function BlogToc({ items }: BlogTocProps) {
   const [activeId, setActiveId] = useState<string>('');
   const containerRef = useRef<HTMLUListElement>(null);
-  const [itemPositions, setItemPositions] = useState<{ top: number; height: number }[]>([]);
+  const [itemPositions, setItemPositions] = useState<
+    { top: number; height: number }[]
+  >([]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -71,7 +73,8 @@ export function BlogToc({ items }: BlogTocProps) {
 
   // Build SVG path segments
   const buildPathSegments = () => {
-    if (itemPositions.length !== items.length) return { segments: [], activeSegment: null };
+    if (itemPositions.length !== items.length)
+      return { segments: [], activeSegment: null };
 
     const segments: { d: string; isActive: boolean }[] = [];
 

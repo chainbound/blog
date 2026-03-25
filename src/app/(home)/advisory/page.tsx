@@ -1,42 +1,46 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-const fontMono = "font-[family-name:var(--font-at-hauss-mono)]";
+const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 export default function AdvisoryPage() {
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("loading");
-    setErrorMessage("");
+    setStatus('loading');
+    setErrorMessage('');
 
     const form = e.currentTarget;
     const formData = new FormData(form);
 
     try {
-      const res = await fetch("/api/advisory", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/advisory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.get("name"),
-          email: formData.get("email"),
-          message: formData.get("message"),
+          name: formData.get('name'),
+          email: formData.get('email'),
+          message: formData.get('message'),
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Something went wrong");
+        throw new Error(data.error || 'Something went wrong');
       }
 
-      setStatus("success");
+      setStatus('success');
       form.reset();
     } catch (err) {
-      setStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "Failed to send message");
+      setStatus('error');
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Failed to send message',
+      );
     }
   }
 
@@ -54,13 +58,17 @@ export default function AdvisoryPage() {
             </span>
             accepting new clients
           </span>
-          <h1 className={`text-3xl font-medium mb-4 page-entrance page-entrance-delay-2 ${fontMono}`}>
+          <h1
+            className={`text-3xl font-medium mb-4 page-entrance page-entrance-delay-2 ${fontMono}`}
+          >
             Advisory Services
           </h1>
           <p className="text-fd-muted-foreground leading-relaxed max-w-2xl page-entrance page-entrance-delay-3">
-            Chainbound offers strategic advisory for teams building blockchain infrastructure.
+            Chainbound offers strategic advisory for teams building blockchain
+            infrastructure.
             <br />
-            We bring deep expertise in MEV, protocol engineering, and high-performance systems.
+            We bring deep expertise in MEV, protocol engineering, and
+            high-performance systems.
           </p>
         </div>
       </section>
@@ -75,24 +83,28 @@ export default function AdvisoryPage() {
             <div className="space-y-5">
               {[
                 {
-                  title: "Networking",
-                  desc: "Custom networking solutions for decentralized systems, delivering higher throughput, lower latency and maximum robustness.",
+                  title: 'Networking',
+                  desc: 'Custom networking solutions for decentralized systems, delivering higher throughput, lower latency and maximum robustness.',
                 },
                 {
-                  title: "Cryptography",
-                  desc: "Cryptographic solutions like ZK, MPC and TEEs, to build truly private, secure, and verifiable protocols.",
+                  title: 'Cryptography',
+                  desc: 'Cryptographic solutions like ZK, MPC and TEEs, to build truly private, secure, and verifiable protocols.',
                 },
                 {
-                  title: "Performance Engineering",
-                  desc: "Improving the performance of networks, distributed systems and cryptographic primitives, to provide web3 experiences on par with web2.",
+                  title: 'Performance Engineering',
+                  desc: 'Improving the performance of networks, distributed systems and cryptographic primitives, to provide web3 experiences on par with web2.',
                 },
               ].map((item) => (
                 <div
                   key={item.title}
                   className="border-l-2 border-fd-border pl-4 hover:border-fd-primary transition-colors"
                 >
-                  <h3 className={`text-sm font-medium mb-1 ${fontMono}`}>{item.title}</h3>
-                  <p className="text-fd-muted-foreground text-sm">{item.desc}</p>
+                  <h3 className={`text-sm font-medium mb-1 ${fontMono}`}>
+                    {item.title}
+                  </h3>
+                  <p className="text-fd-muted-foreground text-sm">
+                    {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -122,15 +134,21 @@ export default function AdvisoryPage() {
 
           {/* Right: Form (2 cols) */}
           <div className="lg:col-span-2 lg:border-l lg:border-fd-border lg:pl-12 page-entrance-block">
-            <h2 className={`text-sm text-fd-muted-foreground mb-6 ${fontMono}`}>get in touch</h2>
+            <h2 className={`text-sm text-fd-muted-foreground mb-6 ${fontMono}`}>
+              get in touch
+            </h2>
 
-            {status === "success" ? (
-              <div className={`border border-fd-primary/50 bg-fd-primary/10 p-6 ${fontMono}`}>
+            {status === 'success' ? (
+              <div
+                className={`border border-fd-primary/50 bg-fd-primary/10 p-6 ${fontMono}`}
+              >
                 <p className="text-sm text-fd-primary mb-2">Message sent!</p>
-                <p className="text-sm text-fd-muted-foreground">We&apos;ll get back to you soon.</p>
+                <p className="text-sm text-fd-muted-foreground">
+                  We&apos;ll get back to you soon.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setStatus("idle")}
+                  onClick={() => setStatus('idle')}
                   className="mt-4 text-sm text-fd-muted-foreground hover:text-fd-primary transition-colors"
                 >
                   Send another message →
@@ -181,8 +199,11 @@ export default function AdvisoryPage() {
                   />
                 </div>
 
-                {status === "error" && (
-                  <p className={`text-sm text-red-500 ${fontMono}`} role="alert">
+                {status === 'error' && (
+                  <p
+                    className={`text-sm text-red-500 ${fontMono}`}
+                    role="alert"
+                  >
                     <span aria-hidden="true">⚠ </span>
                     {errorMessage}
                   </p>
@@ -190,10 +211,10 @@ export default function AdvisoryPage() {
 
                 <button
                   type="submit"
-                  disabled={status === "loading"}
+                  disabled={status === 'loading'}
                   className={`w-full py-3 bg-fd-primary cursor-pointer text-fd-background text-sm font-medium hover:bg-fd-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${fontMono}`}
                 >
-                  {status === "loading" ? "Sending..." : "Send Message"}
+                  {status === 'loading' ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             )}

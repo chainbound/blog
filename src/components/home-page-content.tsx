@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { PostList } from "@/components/post-list";
-import Link from "next/link";
+import { PostList } from '@/components/post-list';
+import Link from 'next/link';
 
-const fontMono = "font-[family-name:var(--font-at-hauss-mono)]";
+const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 type Post = {
   url: string;

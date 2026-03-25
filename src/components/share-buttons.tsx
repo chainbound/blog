@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { ArrowUpRight } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
-const fontMono = "font-[family-name:var(--font-at-hauss-mono)]";
+const fontMono = 'font-[family-name:var(--font-at-hauss-mono)]';
 
 interface ShareButtonsProps {
   title: string;
@@ -22,11 +22,11 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
       setTimeout(() => setCopied(false), 2000);
     } catch (_err: unknown) {
       // Fallback for older browsers
-      const textArea = document.createElement("textarea");
+      const textArea = document.createElement('textarea');
       textArea.value = url;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand("copy");
+      document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -37,7 +37,10 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
     <div
       className={`flex items-center justify-between mt-12 pt-6 border-t border-fd-border text-sm ${fontMono}`}
     >
-      <Link href="/" className="text-fd-muted-foreground hover:text-fd-primary transition-colors">
+      <Link
+        href="/"
+        className="text-fd-muted-foreground hover:text-fd-primary transition-colors"
+      >
         ← all posts
       </Link>
       <div className="flex items-center gap-4 text-fd-muted-foreground">
@@ -47,7 +50,8 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 hover:text-fd-primary transition-colors"
         >
-          x/twitter <ArrowUpRight className="size-3" aria-hidden="true" /><span className="sr-only"> (opens in new tab)</span>
+          x/twitter <ArrowUpRight className="size-3" aria-hidden="true" />
+          <span className="sr-only"> (opens in new tab)</span>
         </a>
         <button
           type="button"
@@ -55,7 +59,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
           className="hover:text-fd-primary transition-colors cursor-pointer"
           aria-live="polite"
         >
-          {copied ? "copied!" : "copy link"}
+          {copied ? 'copied!' : 'copy link'}
         </button>
       </div>
     </div>

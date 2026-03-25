@@ -1,11 +1,14 @@
-import { HomePageContent } from "@/components/home-page-content";
-import { getAuthor } from "@/lib/authors";
-import { blog } from "@/lib/source";
+import { HomePageContent } from '@/components/home-page-content';
+import { getAuthor } from '@/lib/authors';
+import { blog } from '@/lib/source';
 
 export default function HomePage() {
   const posts = [...blog.getPages()]
     .filter((post) => !post.data.hidden)
-    .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
+    );
 
   // Get top 5 most popular tags
   const tagCounts = posts
@@ -28,7 +31,7 @@ export default function HomePage() {
     title: post.data.title,
     description: post.data.description,
     date:
-      typeof post.data.date === "string"
+      typeof post.data.date === 'string'
         ? post.data.date
         : post.data.date.toISOString().slice(0, 10),
     authors: post.data.authors.map(getAuthor),
